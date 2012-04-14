@@ -83,4 +83,10 @@ public class MapReduceMain {
 			String outputPath)  {
 		return false;
 	}
+
+	protected boolean doSecondPhase(String query, Configuration conf,
+			String outputPath, String[] table, String[] filter_table,
+			int numberOfReducer) {
+		return false;
+	}
 }

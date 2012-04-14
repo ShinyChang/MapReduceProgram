@@ -17,7 +17,8 @@ public class QuadMapper extends Mapper<Object, Text, QuadTextPair, Text> {
 	protected Text outputValue = new Text();
 	protected int tableIndex = -1;
 	protected int joinIndex = -1;
-	
+	protected String fileName;
+
 	protected final String[] DIMENSION_TABLE_INDEX = { "customer.tbl",
 			"date.tbl", "part.tbl", "supplier.tbl" };
 	protected final String[][] SCHEMA = {
@@ -32,10 +33,19 @@ public class QuadMapper extends Mapper<Object, Text, QuadTextPair, Text> {
 					"p_color", "p_type", "p_size", "p_container" },
 			{ "s_suppkey", "s_name", "s_address", "s_city", "s_nation",
 					"s_region", "s_phone" } };
-	
+
+	protected final String[] FACT_TABLE_SCHEMA = { "lo_orderkey",
+			"lo_linenumber", "lo_custkey", "lo_partkey", "lo_suppkey",
+			"lo_orderdate", "lo_ordpriority", "lo_shippriority", "lo_quantity",
+			"lo_extendedprice", "lo_ordtotalprice", "lo_discount",
+			"lo_revenue", "lo_supplycost", "lo_tax", "lo_commitdate",
+			"lo_shipmode" };
+	protected final int[] FACT_TABLE_FOREIGN_INDEX = { -1, -1, 0, 2, 3, 1, -1,
+			-1, -1, -1, -1, -1, -1, -1, -1, 1, -1 };
+	protected final String[] OP = { ">=", "<=", ">", "<", "!=", "=" };
+
 	protected void readTableIndex(Context context) {
-		String fileName = ((FileSplit) context.getInputSplit()).getPath()
-				.getName();
+		fileName = ((FileSplit) context.getInputSplit()).getPath().getName();
 		for (int i = 0; i < DIMENSION_TABLE_INDEX.length; i++) {
 			if (fileName.equals(DIMENSION_TABLE_INDEX[i])) {
 				tableIndex = i;
@@ -43,9 +53,12 @@ public class QuadMapper extends Mapper<Object, Text, QuadTextPair, Text> {
 			}
 		}
 	}
-	
-	protected void readJoinIndex(Context context, List<String> join){
-		final String[] OP = { ">=", "<=", ">", "<", "!=", "=" };
+
+	protected void readJoinIndex(Context context, List<String> join) {
+		// 如果來自Fact Table直接離開
+		if (tableIndex < 0) {
+			return;
+		}
 		String first_word = DIMENSION_TABLE_INDEX[tableIndex].substring(0, 1);
 		for (int i = 0; i < join.size(); i++) {
 			for (int j = 0; j < OP.length; j++) {
@@ -71,8 +84,8 @@ public class QuadMapper extends Mapper<Object, Text, QuadTextPair, Text> {
 		return tmpList;
 	}
 
-	protected String[] readRow(Text row) {
-		StringTokenizer itr = new StringTokenizer(row.toString(), "|");
+	protected String[] readRow(Text row, String splitSign) {
+		StringTokenizer itr = new StringTokenizer(row.toString(), splitSign);
 		int tableLength = itr.countTokens();
 		String[] tmpToken = new String[tableLength];
 		for (int i = 0; i < tableLength; i++) {

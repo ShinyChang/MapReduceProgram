@@ -78,8 +78,10 @@ public class QuadTextPair implements WritableComparable<QuadTextPair> {
 		result = prime * result
 				+ ((joinCondition == null) ? 0 : joinCondition.hashCode());
 		result = prime * result + ((key == null) ? 0 : key.hashCode());
+		//略過TableType的判斷
+		/*
 		result = prime * result
-				+ ((tableType == null) ? 0 : tableType.hashCode());
+				+ ((tableType == null) ? 0 : tableType.hashCode());*/
 		return result;
 	}
 
@@ -107,11 +109,14 @@ public class QuadTextPair implements WritableComparable<QuadTextPair> {
 				return false;
 		} else if (!key.equals(other.key))
 			return false;
+		//略過TableType的判斷
+		/*
 		if (tableType == null) {
 			if (other.tableType != null)
 				return false;
 		} else if (!tableType.equals(other.tableType))
 			return false;
+			*/
 		return true;
 	}
 
@@ -132,7 +137,6 @@ public class QuadTextPair implements WritableComparable<QuadTextPair> {
 			return cmp;
 		}
 		return joinCondition.compareTo(tp.joinCondition);
-
 	}
 
 

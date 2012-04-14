@@ -35,7 +35,7 @@ public class First_Phase_Mapper extends QuadMapper {
 			throws IOException, InterruptedException {
 
 		// 讀取一列轉換為欄位陣列
-		String[] columnValue = readRow(value);
+		String[] columnValue = readRow(value, "|");
 
 		// 建立Key <primaryKey, tableIndex, joinCondition>
 		outputKey = new QuadTextPair(new IntWritable(
