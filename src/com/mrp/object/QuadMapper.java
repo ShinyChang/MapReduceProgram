@@ -12,7 +12,7 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 
-public class QuadMapper extends Mapper<QuadTextPair, Text, QuadTextPair, Text> {
+public class QuadMapper extends Mapper<Object, Text, QuadTextPair, Text> {
 	protected QuadTextPair outputKey;
 	protected Text outputValue = new Text();
 	protected int tableIndex = -1;
