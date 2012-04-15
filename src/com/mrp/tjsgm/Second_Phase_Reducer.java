@@ -16,14 +16,15 @@ public class Second_Phase_Reducer extends
 	List<String> DimensionTableValue = new ArrayList<String>();
 	List<String> FactTableValue = new ArrayList<String>();
 	int type = -1;
-	int CCCC = 0;
 
 	// initial, only do once
+	@Override
 	public void setup(Context context) {
 
 	}
 
 	// destroy, only do once
+	@Override
 	public void cleanup(Context context) {
 
 		String FTVtmp;
@@ -32,7 +33,6 @@ public class Second_Phase_Reducer extends
 			for (int i = 0; i < FactTableKey.size(); i++) {
 				for (int j = 0; j < DimensionTableKey.size(); j++) {
 					if (FactTableKey.get(i) >= DimensionTableKey.get(j)) {
-						CCCC++;
 						try {
 							FTVtmp = FactTableValue.get(i);
 							// System.out.println("FactTableValue: "+FTVtmp);
@@ -165,15 +165,15 @@ public class Second_Phase_Reducer extends
 			}
 			break;
 		}
-		// System.out.println("CC:"+CCCC);
 	}
 
+	@Override
 	public void reduce(QuadTextPair key, Iterable<Text> values, Context context)
 			throws IOException, InterruptedException {
 		type = Integer.parseInt(key.getJoinCondition().toString());
 		String tmp;
 		switch (type % 6) {
-		// TODO 還沒實作Theta-join
+		// TODO Theta Join
 		case 0:// >=
 		case 1:// <=
 		case 2:// >
@@ -182,7 +182,6 @@ public class Second_Phase_Reducer extends
 
 			for (Text v : values) {
 				tmp = v.toString();
-				// System.out.println("\""+tmpValues[0]+"\"");
 				if (String.valueOf(tmp.charAt(0)).equals("D")) {
 					DimensionTableKey.add(Integer.parseInt(key.getKey()
 							.toString()));
@@ -192,8 +191,6 @@ public class Second_Phase_Reducer extends
 					} else {
 						DimensionTableValue.add(DTVtmp);
 					}
-					// System.out.println("DTV.add:" + tmp.substring(3,
-					// tmp.length()));
 				} else if (String.valueOf(tmp.charAt(0)).equals("F")) {
 					FactTableKey.add(Integer.parseInt(key.getKey().toString()));
 					FactTableValue.add(tmp.substring(3, tmp.length()));
@@ -207,7 +204,7 @@ public class Second_Phase_Reducer extends
 			for (Text v : values) {
 				tmp = v.toString();
 
-				// FIXME 只有支援一個表格一個顯示欄位
+				// FIXLATER 只有支援一個表格一個顯示欄位
 				if (tmp.contains(",")) {
 					fk.add(tmp);
 				} else {
@@ -233,11 +230,11 @@ public class Second_Phase_Reducer extends
 				}
 
 				// column set start
+				// FIXLATER 目前根據欄位給予編號(第三階段會使用)
 				val_sb.append(key.getIndex());
 				val_sb.append("\t");
 				// column set end
 
-				// TODO 下面有BUG，結果有問題
 				String[] tmptmp;
 				for (String v : pk) {
 					tmptmp = v.split(", ");

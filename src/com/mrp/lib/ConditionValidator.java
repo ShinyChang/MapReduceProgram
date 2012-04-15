@@ -12,6 +12,10 @@ public class ConditionValidator {
 			{ "s_suppkey", "s_name", "s_address", "s_city", "s_nation", "s_region", "s_phone" } };
 
 	private final String[] OP = { ">=", "<=", ">", "<", "!=", "=" };
+	private final String BETWEEN = " between ";
+	private final String OR = " or ";
+	private final String AND = " and ";
+	private final String APOSTROPHE = "'";
 	private List<String> filters;
 
 	public boolean valid(int tableIndex, int columnIndex, String value) {
@@ -22,9 +26,9 @@ public class ConditionValidator {
 			// 尋找該欄位的篩選條件
 			if (filter.contains(SCHEMA[tableIndex][columnIndex])) {
 				findColumn = true;
-				if (filter.contains(" between ")) {
+				if (filter.contains(BETWEEN)) {
 					result &= validBetween(filter, value);
-				} else if (filter.contains(" or ")) {
+				} else if (filter.contains(OR)) {
 					result &= validOr(filter, value);
 				} else {
 					result &= validNormal(filter, value);
@@ -36,14 +40,14 @@ public class ConditionValidator {
 	}
 
 	private boolean validBetween(String filter, String value) {
-		String[] temp = filter.split(" and ");
+		String[] temp = filter.split(AND);
 		String MAX = temp[1].trim();
-		if (MAX.contains("'")) {
+		if (MAX.contains(APOSTROPHE)) {
 			MAX = MAX.substring(1, MAX.length() - 1);
 		}
-		temp = temp[0].split(" between ");
+		temp = temp[0].split(BETWEEN);
 		String MIN = temp[1].trim();
-		if (MIN.contains("'")) {
+		if (MIN.contains(APOSTROPHE)) {
 			MIN = MIN.substring(1, MIN.length() - 1);
 		}
 		if (value.compareTo(MAX) <= 0 && value.compareTo(MIN) >= 0) {
@@ -54,8 +58,8 @@ public class ConditionValidator {
 
 	private boolean validOr(String filter, String value) {
 		filter = filter.trim();
-		filter = filter.substring(1, filter.length() - 1);
-		String[] temp = filter.split(" or ");
+		filter = filter.substring(1, filter.length() - 1);//clear ( )
+		String[] temp = filter.split(OR);
 		int require = temp.length;
 		int op[] = new int[temp.length];
 		String filterValue[] = new String[temp.length];
@@ -66,7 +70,7 @@ public class ConditionValidator {
 				if (rule.contains(OP[i])) {
 					op[cnt] = i;
 					String tmp = rule.split(OP[i])[1].trim();
-					if (tmp.contains("'")) {
+					if (tmp.contains(APOSTROPHE)) {
 						tmp = tmp.substring(1, tmp.length() - 1);
 					}
 					filterValue[cnt] = tmp;
@@ -80,7 +84,7 @@ public class ConditionValidator {
 		int result = -2;
 		for (int i = 0; i < require; i++) {
 			result = value.compareTo(filterValue[i]);
-			if (check(result, op[i])) {
+			if (finalCheck(result, op[i])) {
 				cnt++;
 			}
 		}
@@ -94,19 +98,19 @@ public class ConditionValidator {
 		for (i = 0; i < OP.length; i++) {
 			if (filter.contains(OP[i])) {
 				filterValue = filter.split(OP[i])[1].trim();
-				if (filterValue.contains("'")) {
+				if (filterValue.contains(APOSTROPHE)) {
 					filterValue = filterValue.substring(1, filterValue.length() - 1);
 				}
 				result = value.compareToIgnoreCase(filterValue);
 				break;
 			}
 		}
-		return check(result, i);
+		return finalCheck(result, i);
 	}
 
-	private boolean check(int result, int opIndex) {
+	private boolean finalCheck(int result, int opIndex) {
 		if (result > 0) {
-			if (opIndex % 2 == 0) {// 0, 2, 4
+			if (opIndex % 2 == 0) {
 				return true;
 			}
 		} else if (result < 0) {

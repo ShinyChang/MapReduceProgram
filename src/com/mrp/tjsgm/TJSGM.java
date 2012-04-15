@@ -23,33 +23,41 @@ import com.mrp.parser.SQLParser;
 public class TJSGM extends MapReduceMain {
 	private final String FUNCTION_NAME = "TJSGM";
 
+	protected void wrieteGlobalInfoToHDFS(SQLParser parser) {
+		WriteHDFS writeHDFS = new WriteHDFS();
+		writeHDFS.writeGlobalInfo(GLOBAL_INFO_COLUMN, parser.getColumns());
+		writeHDFS.writeGlobalInfo(GLOBAL_INFO_FILTER, parser.getFilters());
+		writeHDFS.writeGlobalInfo(GLOBAL_INFO_FILTER_TABLE,
+				parser.getFilterTables());
+		writeHDFS.writeGlobalInfo(GLOBAL_INFO_JOIN, parser.getJoins());
+		writeHDFS.writeGlobalInfo(GLOBAL_INFO_TABLE, parser.getTables());
+		writeHDFS.writeGlobalInfo(GLOBAL_INFO_DIMENSION_TABLE,
+				parser.getDimensionTables());
+		writeHDFS.writeGlobalInfo(GLOBAL_INFO_FACT_TABLE,
+				parser.getFactTable());
+		writeHDFS
+				.writeGlobalInfo(GLOBAL_INFO_GROUP_BY, parser.getGroupby());
+		writeHDFS
+				.writeGlobalInfo(GLOBAL_INFO_ORDER_BY, parser.getOrderby());		
+	}
+	
 	@Override
 	public boolean run(String query) {
 		query = query.toUpperCase();
 		boolean state = true;
 		boolean isThetaJoin;
+
 		SQLParser parser = new SQLParser();
-		WriteHDFS writeHDFS = new WriteHDFS();
+		wrieteGlobalInfoToHDFS(parser);
 
 		// parse query
 		state &= parser.parse(query + ".txt"); // file name
 		if (state) {
+
+			// TODO Theta Join
 			isThetaJoin = parser.isThetaJoin();
 
-			writeHDFS.writeGlobalInfo(GLOBAL_INFO_COLUMN, parser.getColumns());
-			writeHDFS.writeGlobalInfo(GLOBAL_INFO_FILTER, parser.getFilters());
-			writeHDFS.writeGlobalInfo(GLOBAL_INFO_FILTER_TABLE,
-					parser.getFilterTables());
-			writeHDFS.writeGlobalInfo(GLOBAL_INFO_JOIN, parser.getJoins());
-			writeHDFS.writeGlobalInfo(GLOBAL_INFO_TABLE, parser.getTables());
-			writeHDFS.writeGlobalInfo(GLOBAL_INFO_DIMENSION_TABLE,
-					parser.getDimensionTables());
-			writeHDFS.writeGlobalInfo(GLOBAL_INFO_FACT_TABLE,
-					parser.getFactTable());
-			writeHDFS
-					.writeGlobalInfo(GLOBAL_INFO_GROUP_BY, parser.getGroupby());
-			writeHDFS
-					.writeGlobalInfo(GLOBAL_INFO_ORDER_BY, parser.getOrderby());
+
 
 			if (state) { // init conf
 				Configuration conf = new Configuration();
@@ -121,8 +129,6 @@ public class TJSGM extends MapReduceMain {
 			dimension_talbe.add(TABLE_SUPPLIER);
 
 			DistributedCache.addCacheFile(new URI(FULL_PATH_COLUMN), conf);
-
-			DistributedCache.addCacheFile(new URI(FULL_PATH_FILTER), conf);
 			DistributedCache.addCacheFile(new URI(FULL_PATH_JOIN), conf);
 
 			for (String t : filter_table) {
