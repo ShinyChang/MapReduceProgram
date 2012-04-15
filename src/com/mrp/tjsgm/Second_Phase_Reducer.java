@@ -203,14 +203,15 @@ public class Second_Phase_Reducer extends
 		case 5:// =
 			List<String> fk = new ArrayList<String>();
 			List<String> pk = new ArrayList<String>();
+
 			for (Text v : values) {
 				tmp = v.toString();
+
+				// FIXME 只有支援一個表格一個顯示欄位
 				if (tmp.contains(",")) {
-					 System.out.println("PK:"+ tmp);
-					pk.add(tmp);
-				} else {
-					 System.out.println("FK:"+ tmp);
 					fk.add(tmp);
+				} else {
+					pk.add(tmp);
 				}
 			}
 
@@ -235,12 +236,12 @@ public class Second_Phase_Reducer extends
 				val_sb.append(key.getIndex());
 				val_sb.append("\t");
 				// column set end
-				
+
 				// TODO 下面有BUG，結果有問題
 				String[] tmptmp;
 				for (String v : pk) {
 					tmptmp = v.split(", ");
-					for (int j = 1; j < tmptmp.length; j++) {
+					for (int j = 0; j < tmptmp.length; j++) {
 						if (!tmptmp[j].equals("")) {
 							val_sb.append(tmptmp[j]);
 							val_sb.append("\t");
