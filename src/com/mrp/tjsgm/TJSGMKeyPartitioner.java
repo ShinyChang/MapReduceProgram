@@ -5,7 +5,7 @@ import org.apache.hadoop.mapreduce.Partitioner;
 
 import com.mrp.object.QuadTextPair;
 
-public class KeyPartitioner extends Partitioner<QuadTextPair, Text> {
+public class TJSGMKeyPartitioner extends Partitioner<QuadTextPair, Text> {
 
 	@Override
 	public int getPartition(QuadTextPair key, Text value, int numPartitions) {

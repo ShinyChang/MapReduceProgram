@@ -12,7 +12,7 @@ import com.mrp.lib.ConditionValidator;
 import com.mrp.object.QuadMapper;
 import com.mrp.object.QuadTextPair;
 
-public class First_Phase_Mapper extends QuadMapper {
+public class FirstPhaseMapper extends QuadMapper {
 	private List<String> column;
 	private List<String> filter;
 

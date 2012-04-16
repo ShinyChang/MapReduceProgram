@@ -9,7 +9,7 @@ import org.apache.hadoop.mapreduce.Reducer;
 
 import com.mrp.object.QuadTextPair;
 
-public class Second_Phase_Reducer extends
+public class SecondPhaseReducer extends
 		Reducer<QuadTextPair, Text, Text, Text> {
 	List<Integer> DimensionTableKey = new ArrayList<Integer>();
 	List<Integer> FactTableKey = new ArrayList<Integer>();

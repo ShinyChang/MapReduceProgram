@@ -18,7 +18,7 @@ import org.apache.hadoop.mapreduce.Reducer;
 import com.mrp.object.BloomFilter;
 import com.mrp.object.QuadTextPair;
 
-public class First_Phase_Reducer extends Reducer<QuadTextPair, Text, QuadTextPair, Text> {
+public class FirstPhaseReducer extends Reducer<QuadTextPair, Text, QuadTextPair, Text> {
 
 	private static List<String> DIMENSION_TABLE;
 	private BloomFilter<IntWritable>[] bf;

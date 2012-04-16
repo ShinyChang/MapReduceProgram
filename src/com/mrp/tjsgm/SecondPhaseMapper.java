@@ -15,7 +15,7 @@ import com.mrp.object.BloomFilter;
 import com.mrp.object.QuadMapper;
 import com.mrp.object.QuadTextPair;
 
-public class Second_Phase_Mapper extends QuadMapper {
+public class SecondPhaseMapper extends QuadMapper {
 	private final String FP_OUTPUT = "part-r-00000";
 
 	private List<String> column;
@@ -32,9 +32,11 @@ public class Second_Phase_Mapper extends QuadMapper {
 	private int[] RF;
 
 	@Override
-	protected void setup(Context context) throws IOException, InterruptedException {
+	protected void setup(Context context) throws IOException,
+			InterruptedException {
 		readTableIndex(context);
-		Path[] localFiles = DistributedCache.getLocalCacheFiles(context.getConfiguration());
+		Path[] localFiles = DistributedCache.getLocalCacheFiles(context
+				.getConfiguration());
 
 		// 判斷檔案來源
 		if (fileName.equals(FP_OUTPUT)) {
@@ -54,7 +56,7 @@ public class Second_Phase_Mapper extends QuadMapper {
 		for (String c : column) {
 			c = c.trim();
 			if (c.contains("sum(")) {
-				String[] tmp = c.substring(4, c.indexOf(")") - 1).split("-");
+				String[] tmp = c.substring(4, c.indexOf(")")).split("-");
 				RF = new int[tmp.length];
 				for (int idx = 0; idx < tmp.length; idx++) {
 					tmp[idx] = tmp[idx].trim();
@@ -81,11 +83,12 @@ public class Second_Phase_Mapper extends QuadMapper {
 		}
 
 		// 讀取BloomFilter檔案
-		bloomFilter = new BloomFilter[localFiles.length - 3];
+		bloomFilter = new BloomFilter[localFiles.length - 2];
 		for (int i = 0; i < bloomFilter.length; i++) {
 			bloomFilter[i] = new BloomFilter<Text>();
-			bloomFilter[i].readFields(new DataInputStream(new FileInputStream(localFiles[i + 3].toString())));
-			bloomFilterMapping.add(localFiles[i + 3].getName());
+			bloomFilter[i].readFields(new DataInputStream(new FileInputStream(
+					localFiles[i + 2].toString())));
+			bloomFilterMapping.add(localFiles[i + 2].getName());
 		}
 
 		// Foreign key Index
@@ -101,7 +104,8 @@ public class Second_Phase_Mapper extends QuadMapper {
 	}
 
 	@Override
-	protected void map(Object key, Text value, Context context) throws IOException, InterruptedException {
+	protected void map(Object key, Text value, Context context)
+			throws IOException, InterruptedException {
 
 		// 真實表格
 		if (isFactTable) {
@@ -120,9 +124,11 @@ public class Second_Phase_Mapper extends QuadMapper {
 		outputValue.clear();
 	}
 
-	protected void doFirstPhaseOutput(Context context, Text value) throws IOException, InterruptedException {
+	protected void doFirstPhaseOutput(Context context, Text value)
+			throws IOException, InterruptedException {
 		String[] columnValue = readRow(value, "\t");
-		outputKey = new QuadTextPair(columnValue[0], columnValue[1], columnValue[2], columnValue[3]);
+		outputKey = new QuadTextPair(columnValue[0], columnValue[1],
+				columnValue[2], columnValue[3]);
 
 		// 如果有欄位被選取(僅適用SSB)
 		if (columnValue.length > 4) {
@@ -131,9 +137,11 @@ public class Second_Phase_Mapper extends QuadMapper {
 		context.write(outputKey, outputValue);
 	}
 
-	protected void doDimensionTable(Context context, Text value) throws IOException, InterruptedException {
+	protected void doDimensionTable(Context context, Text value)
+			throws IOException, InterruptedException {
 		String[] columnValue = readRow(value, "|");
-		outputKey = new QuadTextPair(new IntWritable(Integer.parseInt(columnValue[0])), new IntWritable(tableIndex),
+		outputKey = new QuadTextPair(new IntWritable(
+				Integer.parseInt(columnValue[0])), new IntWritable(tableIndex),
 				new IntWritable(joinIndex), new Text("D"));
 
 		StringBuffer sb = new StringBuffer();
@@ -153,7 +161,8 @@ public class Second_Phase_Mapper extends QuadMapper {
 		context.write(outputKey, outputValue);
 	}
 
-	protected void doFactTable(Context context, Text value) throws IOException, InterruptedException {
+	protected void doFactTable(Context context, Text value) throws IOException,
+			InterruptedException {
 		String[] columnValue = readRow(value, "|");
 		int bf_idx;
 
@@ -166,11 +175,13 @@ public class Second_Phase_Mapper extends QuadMapper {
 
 				// 找到Foreign的Column
 				if (fk.equals(factTableColumnName)) {
-					bf_idx = bloomFilterMapping.indexOf(String.valueOf(FACT_TABLE_FOREIGN_INDEX[fkIndex]));
+					bf_idx = bloomFilterMapping.indexOf(String
+							.valueOf(FACT_TABLE_FOREIGN_INDEX[fkIndex]));
 					if (bf_idx >= 0) {
 
 						// 如果不存在BloomFilter裡面的話就離開
-						if (!bloomFilter[bf_idx].contains(new Text(columnValue[fkIndex]))) {
+						if (!bloomFilter[bf_idx].contains(new Text(
+								columnValue[fkIndex]))) {
 							return;
 						}
 					}
@@ -193,7 +204,8 @@ public class Second_Phase_Mapper extends QuadMapper {
 						String dimensionTableName = DIMENSION_TABLE_INDEX[FACT_TABLE_FOREIGN_INDEX[fkIndex]];
 
 						// 尋找對應於該DimensionTable的joinIndex
-						if (join.get(j).contains(dimensionTableName.substring(0, 1) + "_")) {
+						if (join.get(j).contains(
+								dimensionTableName.substring(0, 1) + "_")) {
 							for (int k = 0; k < OP.length; k++) {
 								if (join.get(j).contains(OP[k])) {
 									factTableJoinIndex = j * 6 + k;
@@ -204,9 +216,10 @@ public class Second_Phase_Mapper extends QuadMapper {
 					}
 
 					// 建立Key
-					outputKey = new QuadTextPair(new IntWritable(Integer.parseInt(columnValue[fkIndex])),
-							new IntWritable(FACT_TABLE_FOREIGN_INDEX[fkIndex]), new IntWritable(factTableJoinIndex),
-							new Text("F"));
+					outputKey = new QuadTextPair(new IntWritable(
+							Integer.parseInt(columnValue[fkIndex])),
+							new IntWritable(FACT_TABLE_FOREIGN_INDEX[fkIndex]),
+							new IntWritable(factTableJoinIndex), new Text("F"));
 
 					// 建立 value<fk1, fk2, ..., fkn, RF>
 					StringBuffer sb = new StringBuffer();
@@ -220,7 +233,8 @@ public class Second_Phase_Mapper extends QuadMapper {
 					// 建立RF
 					// FIXLATER 只有實作相減
 					if (RF.length > 1) {
-						sb.append(Integer.parseInt(columnValue[RF[0]]) - Integer.parseInt(columnValue[RF[1]]));
+						sb.append(Integer.parseInt(columnValue[RF[0]])
+								- Integer.parseInt(columnValue[RF[1]]));
 					} else {
 						sb.append(columnValue[RF[0]]);
 					}
