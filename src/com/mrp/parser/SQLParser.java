@@ -213,15 +213,13 @@ public class SQLParser {
 	}
 
 	private String[] parserFilterTables() {
-		List<String> tableTitle = new ArrayList<String>();
-		for (String table : dimensionTables) {
-			tableTitle.add(table);
-		}
 		List<String> temp = new ArrayList<String>();
 		for (String filter : filters) {
-			for (String tt : tableTitle) {
+			for (String tt : dimensionTables) {
 				if (filter.contains(tt.substring(0, 1) + UNDER_LINE)) {// tableTitle_columnName
-					temp.add(tt);
+					if(!temp.contains(tt)){
+						temp.add(tt);
+					}
 				}
 			}
 		}
