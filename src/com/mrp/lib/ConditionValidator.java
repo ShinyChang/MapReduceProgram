@@ -24,6 +24,7 @@ public class ConditionValidator {
 		for (String filter : filters) {
 
 			// 尋找該欄位的篩選條件
+			//FIXME 當查詢中同一欄位有多個篩選條件時會錯誤
 			if (filter.contains(SCHEMA[tableIndex][columnIndex])) {
 				findColumn = true;
 				if (filter.contains(BETWEEN)) {
@@ -109,8 +110,9 @@ public class ConditionValidator {
 	}
 
 	private boolean finalCheck(int result, int opIndex) {
+		//OP[>= <= > < != =]
 		if (result > 0) {
-			if (opIndex % 2 == 0) {
+			if (opIndex == 0 || opIndex == 2 || opIndex == 4) {
 				return true;
 			}
 		} else if (result < 0) {
@@ -118,7 +120,7 @@ public class ConditionValidator {
 				return true;
 			}
 		} else if (result == 0) {
-			if (opIndex == 0 || opIndex == 2 || opIndex == 5) {
+			if (opIndex == 0 || opIndex == 1 || opIndex == 5) {
 				return true;
 			}
 		}
