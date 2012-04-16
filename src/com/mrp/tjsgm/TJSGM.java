@@ -16,7 +16,11 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 import com.mrp.lib.CheckAndDelete;
 import com.mrp.lib.WriteHDFS;
+import com.mrp.object.FinalPhaseMapper;
+import com.mrp.object.FinalPhaseReducer;
 import com.mrp.object.MapReduceMain;
+import com.mrp.object.ThirdPhaseMapper;
+import com.mrp.object.ThirdPhaseReducer;
 import com.mrp.object.QuadTextPair;
 import com.mrp.parser.SQLParser;
 
@@ -33,14 +37,12 @@ public class TJSGM extends MapReduceMain {
 		writeHDFS.writeGlobalInfo(GLOBAL_INFO_TABLE, parser.getTables());
 		writeHDFS.writeGlobalInfo(GLOBAL_INFO_DIMENSION_TABLE,
 				parser.getDimensionTables());
-		writeHDFS.writeGlobalInfo(GLOBAL_INFO_FACT_TABLE,
-				parser.getFactTable());
 		writeHDFS
-				.writeGlobalInfo(GLOBAL_INFO_GROUP_BY, parser.getGroupby());
-		writeHDFS
-				.writeGlobalInfo(GLOBAL_INFO_ORDER_BY, parser.getOrderby());		
+				.writeGlobalInfo(GLOBAL_INFO_FACT_TABLE, parser.getFactTable());
+		writeHDFS.writeGlobalInfo(GLOBAL_INFO_GROUP_BY, parser.getGroupby());
+		writeHDFS.writeGlobalInfo(GLOBAL_INFO_ORDER_BY, parser.getOrderby());
 	}
-	
+
 	@Override
 	public boolean run(String query) {
 		query = query.toUpperCase();
@@ -48,16 +50,13 @@ public class TJSGM extends MapReduceMain {
 		boolean isThetaJoin;
 
 		SQLParser parser = new SQLParser();
+		state &= parser.parse(query + ".txt"); // file name
 		wrieteGlobalInfoToHDFS(parser);
 
-		// parse query
-		state &= parser.parse(query + ".txt"); // file name
 		if (state) {
 
 			// TODO Theta Join
 			isThetaJoin = parser.isThetaJoin();
-
-
 
 			if (state) { // init conf
 				Configuration conf = new Configuration();
@@ -70,8 +69,72 @@ public class TJSGM extends MapReduceMain {
 						parser.getTables(), parser.getFilterTables(),
 						parser.getTables().length - 1);
 			}
+			if (state) {
+				Configuration conf = new Configuration();
+				state &= doThirdPhase(query.toUpperCase(), conf,
+						PATH_OUTPUT_THIRD);
+			}
+			if (state) {
+				Configuration conf = new Configuration();
+				state &= doForthPhase(query.toUpperCase(), conf,
+						PATH_OUTPUT_FINAL);
+			}
 		}
 		return super.run(query);
+	}
+
+	@Override
+	protected boolean doForthPhase(String query, Configuration conf,
+			String outputPath) {
+		try {
+			conf.setLong(MAPRED_TASK_TIMEOUT, Long.MAX_VALUE);
+			Job job = new Job(conf, FUNCTION_NAME + " Final Phase " + query);
+			job.setJarByClass(TJSGM.class);
+			job.setMapperClass(FinalPhaseMapper.class);
+			job.setReducerClass(FinalPhaseReducer.class);
+			job.setOutputKeyClass(Text.class);
+			job.setOutputValueClass(Text.class);
+			FileInputFormat.addInputPath(job, new Path(PATH_OUTPUT_THIRD));// merge_output
+			CheckAndDelete.checkAndDelete(outputPath, conf);
+			FileOutputFormat.setOutputPath(job, new Path(outputPath));
+			return job.waitForCompletion(true);
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
+
+	@Override
+	protected boolean doThirdPhase(String query, Configuration conf,
+			String outputPath) {
+		try {
+			DistributedCache.addCacheFile(new URI(FULL_PATH_JOIN), conf);
+			conf.setLong(MAPRED_TASK_TIMEOUT, Long.MAX_VALUE);
+			Job job = new Job(conf, FUNCTION_NAME + " Third Phase " + query);
+			job.setJarByClass(TJSGM.class);
+			job.setMapperClass(ThirdPhaseMapper.class);
+			job.setReducerClass(ThirdPhaseReducer.class);
+			job.setOutputKeyClass(Text.class);
+			job.setOutputValueClass(Text.class);
+			FileInputFormat.addInputPath(job, new Path(PATH_OUTPUT_SECOND));// SnG_output
+
+			CheckAndDelete.checkAndDelete(outputPath, conf);
+			FileOutputFormat.setOutputPath(job, new Path(outputPath));
+			return job.waitForCompletion(true);
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+		}
+		return false;
 	}
 
 	@Override
@@ -89,8 +152,8 @@ public class TJSGM extends MapReduceMain {
 			// new job
 			Job job = new Job(conf, FUNCTION_NAME + " First Phase " + query);
 			job.setJarByClass(TJSGM.class);
-			job.setMapperClass(First_Phase_Mapper.class);
-			job.setReducerClass(First_Phase_Reducer.class);
+			job.setMapperClass(FirstPhaseMapper.class);
+			job.setReducerClass(FirstPhaseReducer.class);
 			job.setOutputKeyClass(QuadTextPair.class);
 			job.setOutputValueClass(Text.class);
 
@@ -104,17 +167,14 @@ public class TJSGM extends MapReduceMain {
 			return job.waitForCompletion(true);
 		} catch (URISyntaxException e) {
 			e.printStackTrace();
-			return false;
 		} catch (IOException e) {
 			e.printStackTrace();
-			return false;
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
-			return false;
 		} catch (InterruptedException e) {
 			e.printStackTrace();
-			return false;
 		}
+		return false;
 	}
 
 	@Override
@@ -138,10 +198,10 @@ public class TJSGM extends MapReduceMain {
 			conf.setLong(MAPRED_TASK_TIMEOUT, Long.MAX_VALUE);
 			Job job = new Job(conf, FUNCTION_NAME + " Second Phase " + query);
 			job.setJarByClass(TJSGM.class);
-			job.setMapperClass(Second_Phase_Mapper.class);
-			job.setPartitionerClass(KeyPartitioner.class);
+			job.setMapperClass(SecondPhaseMapper.class);
+			job.setPartitionerClass(TJSGMKeyPartitioner.class);
 			job.setNumReduceTasks(numberOfReducer);
-			job.setReducerClass(Second_Phase_Reducer.class);
+			job.setReducerClass(SecondPhaseReducer.class);
 			job.setOutputKeyClass(QuadTextPair.class);
 			job.setOutputValueClass(Text.class);
 			FileInputFormat.addInputPath(job, new Path(PATH_INPUT
@@ -160,24 +220,20 @@ public class TJSGM extends MapReduceMain {
 				FileInputFormat.addInputPath(job, new Path(PATH_INPUT
 						+ SYSTEM_SPLIT + t + SYSTEM_SPLIT));
 			}
-			CheckAndDelete.checkAndDelete(outputPath,
-					conf);
+			CheckAndDelete.checkAndDelete(outputPath, conf);
 			FileOutputFormat.setOutputPath(job, new Path(outputPath));
 
 			return job.waitForCompletion(true);
 		} catch (URISyntaxException e) {
 			e.printStackTrace();
-			return false;
 		} catch (IOException e) {
 			e.printStackTrace();
-			return false;
 		} catch (InterruptedException e) {
 			e.printStackTrace();
-			return false;
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
-			return false;
 		}
+		return false;
 	}
 
 }

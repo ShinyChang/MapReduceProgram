@@ -126,7 +126,7 @@ public class Main {
 	}
 
 	private void debug() {
-		new TJSGM().run( "Q2.2");
+		new TJSGM().run("Q3.4");
 	}
 
 	private int[] convertObjectArrayToIntegerArray(Object[] objectArray) {
