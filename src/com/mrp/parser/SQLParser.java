@@ -1,31 +1,28 @@
 package com.mrp.parser;
 
-import java.io.BufferedInputStream;
-import java.io.DataInputStream;
+import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author Shiny
- * This is parser only work fine with star-join(Star Schema Benchmark)
+ *         This is parser only work fine with star-join(Star Schema Benchmark)
  */
 public class SQLParser {
 	private final String AND = " and ";
 	private final String BETWEEN = " between ";
-	private BufferedInputStream bis = null;
 	private String[] columns;
 	private String content = "";
 	private String[] dimensionTables;
-	private DataInputStream dis = null;
-	private final String[] FACT_TABLE = {"lineorder"};
+	private BufferedReader bufferedReader = null;
+	private final String[] FACT_TABLE = { "lineorder" };
 
 	private String[] filters;
 	private String[] filterTables;
-	private FileInputStream fis = null;
 	private final String FROM = " from ";
 
 	private final String GROUP_BY = " group by ";
@@ -128,8 +125,7 @@ public class SQLParser {
 	private String[] parseColumns() {
 		int startIndex = content.indexOf(SELECT) + SELECT.length();
 		int endIndex = content.indexOf(FROM);
-		return converStringToArray(content.substring(startIndex, endIndex)
-				.trim(), SPLIT_STRING);
+		return converStringToArray(content.substring(startIndex, endIndex).trim(), SPLIT_STRING);
 	}
 
 	private String[] parseDimensionTables() {
@@ -154,7 +150,7 @@ public class SQLParser {
 		}
 		filters = filters.trim();
 		filters = filters.replaceAll(AND, SPLIT_STRING);
-		
+
 		// check if between
 		String[] tmp = filters.split(BETWEEN);
 		String filter_rule = "";
@@ -176,15 +172,13 @@ public class SQLParser {
 	private String[] parseGroupBy() {
 		int startIndex = content.indexOf(GROUP_BY) + GROUP_BY.length();
 		int endIndex = content.indexOf(ORDER_BY);
-		return converStringToArray(content.substring(startIndex, endIndex)
-				.trim(), SPLIT_STRING);
+		return converStringToArray(content.substring(startIndex, endIndex).trim(), SPLIT_STRING);
 	}
 
 	private String[] parseJoins() {
 		int startIndex = content.indexOf(WHERE) + WHERE.length();
 		int endIndex = content.indexOf(GROUP_BY);
-		String[] filters = content.substring(startIndex, endIndex).trim()
-				.split(AND);
+		String[] filters = content.substring(startIndex, endIndex).trim().split(AND);
 		String join = "";
 		for (String filter : filters) {
 			filter = filter.trim();
@@ -202,14 +196,12 @@ public class SQLParser {
 				}
 			}
 		}
-		return converStringToArray(join.substring(0, join.length() - 2),
-				SPLIT_STRING);
+		return converStringToArray(join.substring(0, join.length() - 2), SPLIT_STRING);
 	}
 
 	private String[] parseOrderBy() {
 		int startIndex = content.indexOf(ORDER_BY) + ORDER_BY.length();
-		return converStringToArray(content.substring(startIndex).trim()
-				.replaceAll(";", ""), SPLIT_STRING);
+		return converStringToArray(content.substring(startIndex).trim().replaceAll(";", ""), SPLIT_STRING);
 	}
 
 	private String[] parserFilterTables() {
@@ -217,7 +209,7 @@ public class SQLParser {
 		for (String filter : filters) {
 			for (String tt : dimensionTables) {
 				if (filter.contains(tt.substring(0, 1) + UNDER_LINE)) {// tableTitle_columnName
-					if(!temp.contains(tt)){
+					if (!temp.contains(tt)) {
 						temp.add(tt);
 					}
 				}
@@ -229,21 +221,16 @@ public class SQLParser {
 	private String[] parseTables() {
 		int startIndex = content.indexOf(FROM) + FROM.length();
 		int endIndex = content.indexOf(WHERE);
-		return converStringToArray(content.substring(startIndex, endIndex)
-				.trim(), SPLIT_STRING);
+		return converStringToArray(content.substring(startIndex, endIndex).trim(), SPLIT_STRING);
 	}
 
 	private boolean readFile(File file) {
 		try {
-			fis = new FileInputStream(file);
-			bis = new BufferedInputStream(fis);
-			dis = new DataInputStream(bis);
-			while (dis.available() != 0) {
-				content += dis.readLine() + WHITE_SPACE;
+			bufferedReader = new BufferedReader(new FileReader(file));
+			while (bufferedReader.ready()) {
+				content += bufferedReader.readLine() + WHITE_SPACE;
 			}
-			fis.close();
-			bis.close();
-			dis.close();
+			bufferedReader.close();
 			content = new String(content.getBytes("8859_1"), "BIG5");
 			content.toLowerCase();
 			columns = parseColumns();
