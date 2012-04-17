@@ -6,9 +6,10 @@ import java.util.List;
 public class ConditionValidator {
 	private final String[][] SCHEMA = {
 			{ "c_custkey", "c_name", "c_address", "c_city", "c_nation", "c_region", "c_phone", "c_mktsegment" },
-			{ "d_datekey", "d_date", "d_dayofweek", "d_month", "d_year", "d_yearmonthnum", "d_yearmonth", "d_daynuminweek", "d_daynuminmonth",
-					"d_daynuminyear", "d_monthnuminyear", "d_weeknuminyear", "d_sellingseason", "d_lastdayinmonthfl", "d_holidayfl", "d_weekdayfl",
-					"d_daynuminmonth" }, { "p_partkey", "p_name", "p_mfgr", "p_category", "p_brand1", "p_color", "p_type", "p_size", "p_container" },
+			{ "d_datekey", "d_date", "d_dayofweek", "d_month", "d_year", "d_yearmonthnum", "d_yearmonth",
+					"d_daynuminweek", "d_daynuminmonth", "d_daynuminyear", "d_monthnuminyear", "d_weeknuminyear",
+					"d_sellingseason", "d_lastdayinmonthfl", "d_holidayfl", "d_weekdayfl", "d_daynuminmonth" },
+			{ "p_partkey", "p_name", "p_mfgr", "p_category", "p_brand1", "p_color", "p_type", "p_size", "p_container" },
 			{ "s_suppkey", "s_name", "s_address", "s_city", "s_nation", "s_region", "s_phone" } };
 
 	private final String[] OP = { ">=", "<=", ">", "<", "!=", "=" };
@@ -21,23 +22,23 @@ public class ConditionValidator {
 	public boolean valid(int tableIndex, int columnIndex, String value) {
 		boolean result = true;
 		boolean findColumn = false;
+		boolean or = false;
 		for (String filter : filters) {
 
 			// 尋找該欄位的篩選條件
-			//FIXME 當查詢中同一欄位有多個篩選條件時會錯誤
 			if (filter.contains(SCHEMA[tableIndex][columnIndex])) {
 				findColumn = true;
 				if (filter.contains(BETWEEN)) {
 					result &= validBetween(filter, value);
 				} else if (filter.contains(OR)) {
-					result &= validOr(filter, value);
+					or |= validOr(filter, value);
+					result &= or;
 				} else {
 					result &= validNormal(filter, value);
 				}
 			}
 		}
-		
-		return result && findColumn;
+		return or || result && findColumn;
 	}
 
 	private boolean validBetween(String filter, String value) {
@@ -59,7 +60,7 @@ public class ConditionValidator {
 
 	private boolean validOr(String filter, String value) {
 		filter = filter.trim();
-		filter = filter.substring(1, filter.length() - 1);//clear ( )
+		filter = filter.substring(1, filter.length() - 1);// clear ( )
 		String[] temp = filter.split(OR);
 		int require = temp.length;
 		int op[] = new int[temp.length];
@@ -84,6 +85,7 @@ public class ConditionValidator {
 		cnt = 0;
 		int result = -2;
 		for (int i = 0; i < require; i++) {
+
 			result = value.compareTo(filterValue[i]);
 			if (finalCheck(result, op[i])) {
 				cnt++;
@@ -110,7 +112,7 @@ public class ConditionValidator {
 	}
 
 	private boolean finalCheck(int result, int opIndex) {
-		//OP[>= <= > < != =]
+		// OP[>= <= > < != =]
 		if (result > 0) {
 			if (opIndex == 0 || opIndex == 2 || opIndex == 4) {
 				return true;
