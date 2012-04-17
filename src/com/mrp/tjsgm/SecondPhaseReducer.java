@@ -22,23 +22,29 @@ public class SecondPhaseReducer extends Reducer<QuadTextPair, Text, Text, Text> 
 	final String WHITE_SPACE = " ";
 	final String EMPTY = "";
 
+	private void writeOutput(Context context, int dimensionTableKey) throws IOException, InterruptedException {
+		String FTVtmp = FactTableValue.get(dimensionTableKey);
+		context.write(
+				new Text(FTVtmp.substring(0, FTVtmp.lastIndexOf(COMMA + WHITE_SPACE))),
+
+				// FIXLATER 目前根據欄位給予編號(第三階段會使用)
+				new Text((type / 6)// table id
+						+ TAB
+						+ DimensionTableValue.get(dimensionTableKey)// Rdi
+						+ FTVtmp.substring(
+								FTVtmp.lastIndexOf(COMMA + WHITE_SPACE) + COMMA.length() + WHITE_SPACE.length(),
+								FTVtmp.length())));
+	}
+
 	@Override
 	public void cleanup(Context context) throws IOException, InterruptedException {
 
-		String FTVtmp;
 		switch (type % 6) {
 		case 0:// >=
 			for (int i = 0; i < FactTableKey.size(); i++) {
 				for (int j = 0; j < DimensionTableKey.size(); j++) {
 					if (FactTableKey.get(i) >= DimensionTableKey.get(j)) {
-						FTVtmp = FactTableValue.get(i);
-						context.write(
-								new Text(FTVtmp.substring(0, FTVtmp.lastIndexOf(COMMA + WHITE_SPACE))),
-								new Text((type / 6) + TAB
-										+ DimensionTableValue.get(j)// Rdi
-										+ FTVtmp.substring(FTVtmp.lastIndexOf(COMMA + WHITE_SPACE) + COMMA.length()
-												+ WHITE_SPACE.length(), FTVtmp.length())));
-
+						writeOutput(context, j);
 					}
 				}
 			}
@@ -47,13 +53,7 @@ public class SecondPhaseReducer extends Reducer<QuadTextPair, Text, Text, Text> 
 			for (int i = 0; i < FactTableKey.size(); i++) {
 				for (int j = 0; j < DimensionTableKey.size(); j++) {
 					if (FactTableKey.get(i) <= DimensionTableKey.get(j)) {
-						FTVtmp = FactTableValue.get(i);
-						context.write(
-								new Text(FTVtmp.substring(0, FTVtmp.lastIndexOf(COMMA + WHITE_SPACE))),
-								new Text((type / 6) + TAB
-										+ DimensionTableValue.get(j)// Rdi
-										+ FTVtmp.substring(FTVtmp.lastIndexOf(COMMA + WHITE_SPACE) + COMMA.length()
-												+ WHITE_SPACE.length(), FTVtmp.length())));
+						writeOutput(context, j);
 					}
 				}
 			}
@@ -62,13 +62,7 @@ public class SecondPhaseReducer extends Reducer<QuadTextPair, Text, Text, Text> 
 			for (int i = 0; i < FactTableKey.size(); i++) {
 				for (int j = 0; j < DimensionTableKey.size(); j++) {
 					if (FactTableKey.get(i) > DimensionTableKey.get(j)) {
-						FTVtmp = FactTableValue.get(i);
-						context.write(
-								new Text(FTVtmp.substring(0, FTVtmp.lastIndexOf(COMMA + WHITE_SPACE))),
-								new Text((type / 6) + TAB
-										+ DimensionTableValue.get(j)// Rdi
-										+ FTVtmp.substring(FTVtmp.lastIndexOf(COMMA + WHITE_SPACE) + COMMA.length()
-												+ WHITE_SPACE.length(), FTVtmp.length())));
+						writeOutput(context, j);
 					}
 				}
 			}
@@ -77,13 +71,7 @@ public class SecondPhaseReducer extends Reducer<QuadTextPair, Text, Text, Text> 
 			for (int i = 0; i < FactTableKey.size(); i++) {
 				for (int j = 0; j < DimensionTableKey.size(); j++) {
 					if (FactTableKey.get(i) < DimensionTableKey.get(j)) {
-						FTVtmp = FactTableValue.get(i);
-						context.write(
-								new Text(FTVtmp.substring(0, FTVtmp.lastIndexOf(COMMA + WHITE_SPACE))),
-								new Text((type / 6) + TAB
-										+ DimensionTableValue.get(j)// Rdi
-										+ FTVtmp.substring(FTVtmp.lastIndexOf(COMMA + WHITE_SPACE) + COMMA.length()
-												+ WHITE_SPACE.length(), FTVtmp.length())));
+						writeOutput(context, j);
 					}
 				}
 			}
@@ -92,13 +80,7 @@ public class SecondPhaseReducer extends Reducer<QuadTextPair, Text, Text, Text> 
 			for (int i = 0; i < FactTableKey.size(); i++) {
 				for (int j = 0; j < DimensionTableKey.size(); j++) {
 					if (FactTableKey.get(i) != DimensionTableKey.get(j)) {
-						FTVtmp = FactTableValue.get(i);
-						context.write(
-								new Text(FTVtmp.substring(0, FTVtmp.lastIndexOf(COMMA + WHITE_SPACE))),
-								new Text((type / 6) + TAB
-										+ DimensionTableValue.get(j)// Rdi
-										+ FTVtmp.substring(FTVtmp.lastIndexOf(COMMA + WHITE_SPACE) + COMMA.length()
-												+ WHITE_SPACE.length(), FTVtmp.length())));
+						writeOutput(context, j);
 					}
 				}
 			}
@@ -112,26 +94,19 @@ public class SecondPhaseReducer extends Reducer<QuadTextPair, Text, Text, Text> 
 		type = Integer.parseInt(key.getJoinCondition().toString());
 		String tmp;
 		switch (type % 6) {
-		// TODO Theta Join
 		case 0:// >=
 		case 1:// <=
 		case 2:// >
 		case 3:// <
 		case 4:// !=
-
 			for (Text v : values) {
 				tmp = v.toString();
-				if (String.valueOf(tmp.charAt(0)).equals(DIMENSION_TABLE_SIGN)) {
+				if (!tmp.contains(COMMA + WHITE_SPACE)) {
 					DimensionTableKey.add(Integer.parseInt(key.getKey().toString()));
-					String DTVtmp = tmp.substring(3, tmp.length());
-					if (DTVtmp.equals(EMPTY)) {
-						DimensionTableValue.add(EMPTY);
-					} else {
-						DimensionTableValue.add(DTVtmp);
-					}
-				} else if (String.valueOf(tmp.charAt(0)).equals(FACT_TABLE_SIGN)) {
+					DimensionTableValue.add(tmp);
+				} else {
 					FactTableKey.add(Integer.parseInt(key.getKey().toString()));
-					FactTableValue.add(tmp.substring(3, tmp.length()));
+					FactTableValue.add(tmp);
 				}
 			}
 			break;
