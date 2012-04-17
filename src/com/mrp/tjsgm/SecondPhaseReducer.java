@@ -9,23 +9,21 @@ import org.apache.hadoop.mapreduce.Reducer;
 
 import com.mrp.object.QuadTextPair;
 
-public class SecondPhaseReducer extends
-		Reducer<QuadTextPair, Text, Text, Text> {
+public class SecondPhaseReducer extends Reducer<QuadTextPair, Text, Text, Text> {
 	List<Integer> DimensionTableKey = new ArrayList<Integer>();
 	List<Integer> FactTableKey = new ArrayList<Integer>();
 	List<String> DimensionTableValue = new ArrayList<String>();
 	List<String> FactTableValue = new ArrayList<String>();
 	int type = -1;
+	final String TAB = "\t";
+	final String DIMENSION_TABLE_SIGN = "D";
+	final String FACT_TABLE_SIGN = "F";
+	final String COMMA = ",";
+	final String WHITE_SPACE = " ";
+	final String EMPTY = "";
 
-	// initial, only do once
 	@Override
-	public void setup(Context context) {
-
-	}
-
-	// destroy, only do once
-	@Override
-	public void cleanup(Context context) {
+	public void cleanup(Context context) throws IOException, InterruptedException {
 
 		String FTVtmp;
 		switch (type % 6) {
@@ -33,25 +31,14 @@ public class SecondPhaseReducer extends
 			for (int i = 0; i < FactTableKey.size(); i++) {
 				for (int j = 0; j < DimensionTableKey.size(); j++) {
 					if (FactTableKey.get(i) >= DimensionTableKey.get(j)) {
-						try {
-							FTVtmp = FactTableValue.get(i);
-							// System.out.println("FactTableValue: "+FTVtmp);
-							context.write(
-									new Text(FTVtmp.substring(0,
-											FTVtmp.lastIndexOf(", "))),
-									new Text(
-											(type / 6)
-													+ "\t"
-													+ DimensionTableValue
-															.get(j)// Rdi
-													+ FTVtmp.substring(
-															FTVtmp.lastIndexOf(", ") + 2,
-															FTVtmp.length())));
-						} catch (IOException e) {
-							e.printStackTrace();
-						} catch (InterruptedException e) {
-							e.printStackTrace();
-						}
+						FTVtmp = FactTableValue.get(i);
+						context.write(
+								new Text(FTVtmp.substring(0, FTVtmp.lastIndexOf(COMMA + WHITE_SPACE))),
+								new Text((type / 6) + TAB
+										+ DimensionTableValue.get(j)// Rdi
+										+ FTVtmp.substring(FTVtmp.lastIndexOf(COMMA + WHITE_SPACE) + COMMA.length()
+												+ WHITE_SPACE.length(), FTVtmp.length())));
+
 					}
 				}
 			}
@@ -60,25 +47,13 @@ public class SecondPhaseReducer extends
 			for (int i = 0; i < FactTableKey.size(); i++) {
 				for (int j = 0; j < DimensionTableKey.size(); j++) {
 					if (FactTableKey.get(i) <= DimensionTableKey.get(j)) {
-						try {
-							FTVtmp = FactTableValue.get(i);
-							// System.out.println("FactTableValue: "+FTVtmp);
-							context.write(
-									new Text(FTVtmp.substring(0,
-											FTVtmp.lastIndexOf(", "))),
-									new Text(
-											(type / 6)
-													+ "\t"
-													+ DimensionTableValue
-															.get(j)// Rdi
-													+ FTVtmp.substring(
-															FTVtmp.lastIndexOf(", ") + 2,
-															FTVtmp.length())));
-						} catch (IOException e) {
-							e.printStackTrace();
-						} catch (InterruptedException e) {
-							e.printStackTrace();
-						}
+						FTVtmp = FactTableValue.get(i);
+						context.write(
+								new Text(FTVtmp.substring(0, FTVtmp.lastIndexOf(COMMA + WHITE_SPACE))),
+								new Text((type / 6) + TAB
+										+ DimensionTableValue.get(j)// Rdi
+										+ FTVtmp.substring(FTVtmp.lastIndexOf(COMMA + WHITE_SPACE) + COMMA.length()
+												+ WHITE_SPACE.length(), FTVtmp.length())));
 					}
 				}
 			}
@@ -87,25 +62,13 @@ public class SecondPhaseReducer extends
 			for (int i = 0; i < FactTableKey.size(); i++) {
 				for (int j = 0; j < DimensionTableKey.size(); j++) {
 					if (FactTableKey.get(i) > DimensionTableKey.get(j)) {
-						try {
-							FTVtmp = FactTableValue.get(i);
-							// System.out.println("FactTableValue: "+FTVtmp);
-							context.write(
-									new Text(FTVtmp.substring(0,
-											FTVtmp.lastIndexOf(", "))),
-									new Text(
-											(type / 6)
-													+ "\t"
-													+ DimensionTableValue
-															.get(j)// Rdi
-													+ FTVtmp.substring(
-															FTVtmp.lastIndexOf(", ") + 2,
-															FTVtmp.length())));
-						} catch (IOException e) {
-							e.printStackTrace();
-						} catch (InterruptedException e) {
-							e.printStackTrace();
-						}
+						FTVtmp = FactTableValue.get(i);
+						context.write(
+								new Text(FTVtmp.substring(0, FTVtmp.lastIndexOf(COMMA + WHITE_SPACE))),
+								new Text((type / 6) + TAB
+										+ DimensionTableValue.get(j)// Rdi
+										+ FTVtmp.substring(FTVtmp.lastIndexOf(COMMA + WHITE_SPACE) + COMMA.length()
+												+ WHITE_SPACE.length(), FTVtmp.length())));
 					}
 				}
 			}
@@ -114,25 +77,13 @@ public class SecondPhaseReducer extends
 			for (int i = 0; i < FactTableKey.size(); i++) {
 				for (int j = 0; j < DimensionTableKey.size(); j++) {
 					if (FactTableKey.get(i) < DimensionTableKey.get(j)) {
-						try {
-							FTVtmp = FactTableValue.get(i);
-							// System.out.println("FactTableValue: "+FTVtmp);
-							context.write(
-									new Text(FTVtmp.substring(0,
-											FTVtmp.lastIndexOf(", "))),
-									new Text(
-											(type / 6)
-													+ "\t"
-													+ DimensionTableValue
-															.get(j)// Rdi
-													+ FTVtmp.substring(
-															FTVtmp.lastIndexOf(", ") + 2,
-															FTVtmp.length())));
-						} catch (IOException e) {
-							e.printStackTrace();
-						} catch (InterruptedException e) {
-							e.printStackTrace();
-						}
+						FTVtmp = FactTableValue.get(i);
+						context.write(
+								new Text(FTVtmp.substring(0, FTVtmp.lastIndexOf(COMMA + WHITE_SPACE))),
+								new Text((type / 6) + TAB
+										+ DimensionTableValue.get(j)// Rdi
+										+ FTVtmp.substring(FTVtmp.lastIndexOf(COMMA + WHITE_SPACE) + COMMA.length()
+												+ WHITE_SPACE.length(), FTVtmp.length())));
 					}
 				}
 			}
@@ -141,25 +92,13 @@ public class SecondPhaseReducer extends
 			for (int i = 0; i < FactTableKey.size(); i++) {
 				for (int j = 0; j < DimensionTableKey.size(); j++) {
 					if (FactTableKey.get(i) != DimensionTableKey.get(j)) {
-						try {
-							FTVtmp = FactTableValue.get(i);
-							// System.out.println("FactTableValue: "+FTVtmp);
-							context.write(
-									new Text(FTVtmp.substring(0,
-											FTVtmp.lastIndexOf(", "))),
-									new Text(
-											(type / 6)
-													+ "\t"
-													+ DimensionTableValue
-															.get(j)// Rdi
-													+ FTVtmp.substring(
-															FTVtmp.lastIndexOf(", ") + 2,
-															FTVtmp.length())));
-						} catch (IOException e) {
-							e.printStackTrace();
-						} catch (InterruptedException e) {
-							e.printStackTrace();
-						}
+						FTVtmp = FactTableValue.get(i);
+						context.write(
+								new Text(FTVtmp.substring(0, FTVtmp.lastIndexOf(COMMA + WHITE_SPACE))),
+								new Text((type / 6) + TAB
+										+ DimensionTableValue.get(j)// Rdi
+										+ FTVtmp.substring(FTVtmp.lastIndexOf(COMMA + WHITE_SPACE) + COMMA.length()
+												+ WHITE_SPACE.length(), FTVtmp.length())));
 					}
 				}
 			}
@@ -168,8 +107,8 @@ public class SecondPhaseReducer extends
 	}
 
 	@Override
-	public void reduce(QuadTextPair key, Iterable<Text> values, Context context)
-			throws IOException, InterruptedException {
+	public void reduce(QuadTextPair key, Iterable<Text> values, Context context) throws IOException,
+			InterruptedException {
 		type = Integer.parseInt(key.getJoinCondition().toString());
 		String tmp;
 		switch (type % 6) {
@@ -182,16 +121,15 @@ public class SecondPhaseReducer extends
 
 			for (Text v : values) {
 				tmp = v.toString();
-				if (String.valueOf(tmp.charAt(0)).equals("D")) {
-					DimensionTableKey.add(Integer.parseInt(key.getKey()
-							.toString()));
+				if (String.valueOf(tmp.charAt(0)).equals(DIMENSION_TABLE_SIGN)) {
+					DimensionTableKey.add(Integer.parseInt(key.getKey().toString()));
 					String DTVtmp = tmp.substring(3, tmp.length());
-					if (DTVtmp.equals("null")) {
-						DimensionTableValue.add("");
+					if (DTVtmp.equals(EMPTY)) {
+						DimensionTableValue.add(EMPTY);
 					} else {
 						DimensionTableValue.add(DTVtmp);
 					}
-				} else if (String.valueOf(tmp.charAt(0)).equals("F")) {
+				} else if (String.valueOf(tmp.charAt(0)).equals(FACT_TABLE_SIGN)) {
 					FactTableKey.add(Integer.parseInt(key.getKey().toString()));
 					FactTableValue.add(tmp.substring(3, tmp.length()));
 				}
@@ -205,7 +143,7 @@ public class SecondPhaseReducer extends
 				tmp = v.toString();
 
 				// FIXLATER 只有支援一個表格一個顯示欄位
-				if (tmp.contains(",")) {
+				if (tmp.contains(COMMA + WHITE_SPACE)) {
 					fk.add(tmp);
 				} else {
 					pk.add(tmp);
@@ -218,11 +156,11 @@ public class SecondPhaseReducer extends
 
 			// 對於每個外來鍵建立一組Key-Value Pair
 			for (String k : fk) {
-				tmpArray = k.split(", ");
+				tmpArray = k.split(COMMA + WHITE_SPACE);
 				// without rf
 				for (int i = 0; i < tmpArray.length - 1; i++) {
 					key_sb.append(tmpArray[i]);
-					key_sb.append(", ");
+					key_sb.append(COMMA + WHITE_SPACE);
 				}
 				// delete ", "
 				if (key_sb.length() > 0) {
@@ -232,22 +170,21 @@ public class SecondPhaseReducer extends
 				// column set start
 				// FIXLATER 目前根據欄位給予編號(第三階段會使用)
 				val_sb.append(key.getIndex());
-				val_sb.append("\t");
+				val_sb.append(TAB);
 				// column set end
 
 				String[] tmptmp;
 				for (String v : pk) {
-					tmptmp = v.split(", ");
+					tmptmp = v.split(COMMA + WHITE_SPACE);
 					for (int j = 0; j < tmptmp.length; j++) {
-						if (!tmptmp[j].equals("")) {
+						if (!tmptmp[j].equals(EMPTY)) {
 							val_sb.append(tmptmp[j]);
 							val_sb.append("\t");
 						}
 					}
 				}
 				val_sb.append(tmpArray[tmpArray.length - 1]);// rf
-				context.write(new Text(key_sb.toString()),
-						new Text(val_sb.toString()));
+				context.write(new Text(key_sb.toString()), new Text(val_sb.toString()));
 				val_sb.delete(0, val_sb.length());
 				key_sb.delete(0, key_sb.length());
 			}

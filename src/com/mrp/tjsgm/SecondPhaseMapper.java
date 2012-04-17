@@ -32,11 +32,9 @@ public class SecondPhaseMapper extends QuadMapper {
 	private int[] RF;
 
 	@Override
-	protected void setup(Context context) throws IOException,
-			InterruptedException {
+	protected void setup(Context context) throws IOException, InterruptedException {
 		readTableIndex(context);
-		Path[] localFiles = DistributedCache.getLocalCacheFiles(context
-				.getConfiguration());
+		Path[] localFiles = DistributedCache.getLocalCacheFiles(context.getConfiguration());
 
 		// 判斷檔案來源
 		if (fileName.equals(FP_OUTPUT)) {
@@ -55,8 +53,8 @@ public class SecondPhaseMapper extends QuadMapper {
 		// FIXLATER 只有實作SUM且裡面只有相減
 		for (String c : column) {
 			c = c.trim();
-			if (c.contains("sum(")) {
-				String[] tmp = c.substring(4, c.indexOf(")")).split("-");
+			if (c.contains(SUM + LEFT_BRACKET)) {
+				String[] tmp = c.substring(4, c.indexOf(RIGHT_BRACKET)).split(MINUS);
 				RF = new int[tmp.length];
 				for (int idx = 0; idx < tmp.length; idx++) {
 					tmp[idx] = tmp[idx].trim();
@@ -86,8 +84,7 @@ public class SecondPhaseMapper extends QuadMapper {
 		bloomFilter = new BloomFilter[localFiles.length - 2];
 		for (int i = 0; i < bloomFilter.length; i++) {
 			bloomFilter[i] = new BloomFilter<Text>();
-			bloomFilter[i].readFields(new DataInputStream(new FileInputStream(
-					localFiles[i + 2].toString())));
+			bloomFilter[i].readFields(new DataInputStream(new FileInputStream(localFiles[i + 2].toString())));
 			bloomFilterMapping.add(localFiles[i + 2].getName());
 		}
 
@@ -104,8 +101,7 @@ public class SecondPhaseMapper extends QuadMapper {
 	}
 
 	@Override
-	protected void map(Object key, Text value, Context context)
-			throws IOException, InterruptedException {
+	protected void map(Object key, Text value, Context context) throws IOException, InterruptedException {
 
 		// 真實表格
 		if (isFactTable) {
@@ -124,11 +120,9 @@ public class SecondPhaseMapper extends QuadMapper {
 		outputValue.clear();
 	}
 
-	protected void doFirstPhaseOutput(Context context, Text value)
-			throws IOException, InterruptedException {
-		String[] columnValue = readRow(value, "\t");
-		outputKey = new QuadTextPair(columnValue[0], columnValue[1],
-				columnValue[2], columnValue[3]);
+	protected void doFirstPhaseOutput(Context context, Text value) throws IOException, InterruptedException {
+		String[] columnValue = readRow(value, TAB);
+		outputKey = new QuadTextPair(columnValue[0], columnValue[1], columnValue[2], columnValue[3]);
 
 		// 如果有欄位被選取(僅適用SSB)
 		if (columnValue.length > 4) {
@@ -137,19 +131,17 @@ public class SecondPhaseMapper extends QuadMapper {
 		context.write(outputKey, outputValue);
 	}
 
-	protected void doDimensionTable(Context context, Text value)
-			throws IOException, InterruptedException {
-		String[] columnValue = readRow(value, "|");
-		outputKey = new QuadTextPair(new IntWritable(
-				Integer.parseInt(columnValue[0])), new IntWritable(tableIndex),
-				new IntWritable(joinIndex), new Text("D"));
+	protected void doDimensionTable(Context context, Text value) throws IOException, InterruptedException {
+		String[] columnValue = readRow(value, VERTICALBAR);
+		outputKey = new QuadTextPair(new IntWritable(Integer.parseInt(columnValue[0])), new IntWritable(tableIndex),
+				new IntWritable(joinIndex), new Text(DIMENSION_TABLE_SIGN));
 
 		StringBuffer sb = new StringBuffer();
 		for (String c : column) {// match column
 			for (int i = 0; i < SCHEMA[tableIndex].length; i++) {
 				if (c.equals(SCHEMA[tableIndex][i])) {
 					sb.append(columnValue[i]);
-					sb.append(", ");
+					sb.append(COMMA + WHITE_SPACE);
 				}
 			}
 		}
@@ -161,9 +153,8 @@ public class SecondPhaseMapper extends QuadMapper {
 		context.write(outputKey, outputValue);
 	}
 
-	protected void doFactTable(Context context, Text value) throws IOException,
-			InterruptedException {
-		String[] columnValue = readRow(value, "|");
+	protected void doFactTable(Context context, Text value) throws IOException, InterruptedException {
+		String[] columnValue = readRow(value, VERTICALBAR);
 		int bf_idx;
 
 		// BloomFilter 快速篩選
@@ -175,13 +166,11 @@ public class SecondPhaseMapper extends QuadMapper {
 
 				// 找到Foreign的Column
 				if (fk.equals(factTableColumnName)) {
-					bf_idx = bloomFilterMapping.indexOf(String
-							.valueOf(FACT_TABLE_FOREIGN_INDEX[fkIndex]));
+					bf_idx = bloomFilterMapping.indexOf(String.valueOf(FACT_TABLE_FOREIGN_INDEX[fkIndex]));
 					if (bf_idx >= 0) {
 
 						// 如果不存在BloomFilter裡面的話就離開
-						if (!bloomFilter[bf_idx].contains(new Text(
-								columnValue[fkIndex]))) {
+						if (!bloomFilter[bf_idx].contains(new Text(columnValue[fkIndex]))) {
 							return;
 						}
 					}
@@ -204,8 +193,7 @@ public class SecondPhaseMapper extends QuadMapper {
 						String dimensionTableName = DIMENSION_TABLE_INDEX[FACT_TABLE_FOREIGN_INDEX[fkIndex]];
 
 						// 尋找對應於該DimensionTable的joinIndex
-						if (join.get(j).contains(
-								dimensionTableName.substring(0, 1) + "_")) {
+						if (join.get(j).contains(dimensionTableName.substring(0, 1) + UNDER_LINE)) {
 							for (int k = 0; k < OP.length; k++) {
 								if (join.get(j).contains(OP[k])) {
 									factTableJoinIndex = j * 6 + k;
@@ -216,10 +204,9 @@ public class SecondPhaseMapper extends QuadMapper {
 					}
 
 					// 建立Key
-					outputKey = new QuadTextPair(new IntWritable(
-							Integer.parseInt(columnValue[fkIndex])),
-							new IntWritable(FACT_TABLE_FOREIGN_INDEX[fkIndex]),
-							new IntWritable(factTableJoinIndex), new Text("F"));
+					outputKey = new QuadTextPair(new IntWritable(Integer.parseInt(columnValue[fkIndex])),
+							new IntWritable(FACT_TABLE_FOREIGN_INDEX[fkIndex]), new IntWritable(factTableJoinIndex),
+							new Text(FACT_TABLE_SIGN));
 
 					// 建立 value<fk1, fk2, ..., fkn, RF>
 					StringBuffer sb = new StringBuffer();
@@ -227,14 +214,13 @@ public class SecondPhaseMapper extends QuadMapper {
 					// 建立Foreign Key
 					for (int idx : foreignKeyIndex) {
 						sb.append(columnValue[idx]);
-						sb.append(", ");
+						sb.append(COMMA + WHITE_SPACE);
 					}
 
 					// 建立RF
 					// FIXLATER 只有實作相減
 					if (RF.length > 1) {
-						sb.append(Integer.parseInt(columnValue[RF[0]])
-								- Integer.parseInt(columnValue[RF[1]]));
+						sb.append(Integer.parseInt(columnValue[RF[0]]) - Integer.parseInt(columnValue[RF[1]]));
 					} else {
 						sb.append(columnValue[RF[0]]);
 					}

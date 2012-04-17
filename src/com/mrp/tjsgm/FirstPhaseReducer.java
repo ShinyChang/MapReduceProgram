@@ -21,13 +21,25 @@ import com.mrp.object.QuadTextPair;
 public class FirstPhaseReducer extends Reducer<QuadTextPair, Text, QuadTextPair, Text> {
 
 	private static List<String> DIMENSION_TABLE;
-	private BloomFilter<IntWritable>[] bf;
-	private List<String> table = new ArrayList<String>();
+	private BloomFilter<IntWritable>[] bloomfilter;
+	private List<String> table;
 	private FSDataOutputStream[] out;
-	private List<Integer> index = new ArrayList<Integer>();
+	private final List<Integer> index = new ArrayList<Integer>();
+	private final String PATH_BLOOM_FILTER = "MRP/bloomfilter/";
 
-	// initial, only do once
-	public void setup(Context context) {
+	protected List<String> readLocalFile(Path localFiles) throws IOException {
+		List<String> tmpList = new ArrayList<String>();
+		FileReader fr = new FileReader(localFiles.toString());
+		BufferedReader br = new BufferedReader(fr);
+		while (br.ready()) {
+			tmpList.add(br.readLine());
+		}
+		br.close();
+		return tmpList;
+	}
+
+	@Override
+	public void setup(Context context) throws IOException, InterruptedException {
 
 		// init dimension table info
 		DIMENSION_TABLE = new ArrayList<String>();
@@ -38,57 +50,39 @@ public class FirstPhaseReducer extends Reducer<QuadTextPair, Text, QuadTextPair,
 
 		Configuration conf = new Configuration();
 		FileSystem[] fs;
-		try {
-			// read distributed catch file
-			DistributedCache.getLocalCacheFiles(context.getConfiguration());
-			Path[] localFiles = DistributedCache.getLocalCacheFiles(context
-					.getConfiguration());
+		// read distributed catch file
+		Path[] localFiles = DistributedCache.getLocalCacheFiles(context.getConfiguration());
+		table = readLocalFile(localFiles[2]);
 
-			// table
-			FileReader fr = new FileReader(localFiles[2].toString());
-			BufferedReader br = new BufferedReader(fr);
-			while (br.ready()) {
-				table.add(br.readLine());
-			}
-			br.close();
+		bloomfilter = new BloomFilter[table.size()];
+		fs = new FileSystem[table.size()];
+		out = new FSDataOutputStream[table.size()];
 
-			// init
-			bf = new BloomFilter[table.size()];
-			fs = new FileSystem[table.size()];
-			out = new FSDataOutputStream[table.size()];
-
-			// create bloomfilter
-			for (int i = 0; i < table.size(); i++) {
-				bf[i] = new BloomFilter<IntWritable>();
-				fs[i] = FileSystem.get(conf);
-				Path outFile = new Path("MRP/bloomfilter/"
-						+ DIMENSION_TABLE.indexOf(table.get(i)));
-				index.add(DIMENSION_TABLE.indexOf(table.get(i)));
-				out[i] = fs[i].create(outFile, true);
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
+		// create bloomfilter
+		for (int i = 0; i < table.size(); i++) {
+			bloomfilter[i] = new BloomFilter<IntWritable>();
+			fs[i] = FileSystem.get(conf);
+			Path outFile = new Path(PATH_BLOOM_FILTER + DIMENSION_TABLE.indexOf(table.get(i)));
+			index.add(DIMENSION_TABLE.indexOf(table.get(i)));
+			out[i] = fs[i].create(outFile, true);
 		}
 
 	}
 
-	public void cleanup(Context context) {
-		try {
-			for (int i = 0; i < table.size(); i++) {
-				bf[i].write(out[i]);
-				out[i].close();
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
-	public void reduce(QuadTextPair key, Iterable<Text> values, Context context)
-			throws IOException, InterruptedException {
-		bf[index.indexOf(Integer.parseInt(key.getIndex().toString()))].add(key
-				.getKey());
+	@Override
+	public void reduce(QuadTextPair key, Iterable<Text> values, Context context) throws IOException,
+			InterruptedException {
+		bloomfilter[index.indexOf(Integer.parseInt(key.getIndex().toString()))].add(key.getKey());
 		for (Text t : values) {
 			context.write(key, t);
+		}
+	}
+
+	@Override
+	protected void cleanup(Context context) throws IOException, InterruptedException {
+		for (int i = 0; i < table.size(); i++) {
+			bloomfilter[i].write(out[i]);
+			out[i].close();
 		}
 	}
 }

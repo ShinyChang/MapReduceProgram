@@ -15,14 +15,14 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 import com.mrp.lib.CheckAndDelete;
+import com.mrp.lib.SQLParser;
 import com.mrp.lib.WriteHDFS;
-import com.mrp.object.FinalPhaseMapper;
-import com.mrp.object.FinalPhaseReducer;
 import com.mrp.object.MapReduceMain;
-import com.mrp.object.ThirdPhaseMapper;
-import com.mrp.object.ThirdPhaseReducer;
 import com.mrp.object.QuadTextPair;
-import com.mrp.parser.SQLParser;
+import com.mrp.shared.FinalPhaseMapper;
+import com.mrp.shared.FinalPhaseReducer;
+import com.mrp.shared.ThirdPhaseMapper;
+import com.mrp.shared.ThirdPhaseReducer;
 
 public class TJSGM extends MapReduceMain {
 	private final String FUNCTION_NAME = "TJSGM";
@@ -31,14 +31,11 @@ public class TJSGM extends MapReduceMain {
 		WriteHDFS writeHDFS = new WriteHDFS();
 		writeHDFS.writeGlobalInfo(GLOBAL_INFO_COLUMN, parser.getColumns());
 		writeHDFS.writeGlobalInfo(GLOBAL_INFO_FILTER, parser.getFilters());
-		writeHDFS.writeGlobalInfo(GLOBAL_INFO_FILTER_TABLE,
-				parser.getFilterTables());
+		writeHDFS.writeGlobalInfo(GLOBAL_INFO_FILTER_TABLE, parser.getFilterTables());
 		writeHDFS.writeGlobalInfo(GLOBAL_INFO_JOIN, parser.getJoins());
 		writeHDFS.writeGlobalInfo(GLOBAL_INFO_TABLE, parser.getTables());
-		writeHDFS.writeGlobalInfo(GLOBAL_INFO_DIMENSION_TABLE,
-				parser.getDimensionTables());
-		writeHDFS
-				.writeGlobalInfo(GLOBAL_INFO_FACT_TABLE, parser.getFactTable());
+		writeHDFS.writeGlobalInfo(GLOBAL_INFO_DIMENSION_TABLE, parser.getDimensionTables());
+		writeHDFS.writeGlobalInfo(GLOBAL_INFO_FACT_TABLE, parser.getFactTable());
 		writeHDFS.writeGlobalInfo(GLOBAL_INFO_GROUP_BY, parser.getGroupby());
 		writeHDFS.writeGlobalInfo(GLOBAL_INFO_ORDER_BY, parser.getOrderby());
 	}
@@ -60,32 +57,27 @@ public class TJSGM extends MapReduceMain {
 
 			if (state) { // init conf
 				Configuration conf = new Configuration();
-				state &= doFirstPhase(query, conf, PATH_OUTPUT_FIRST,
-						parser.getFilterTables());
+				state &= doFirstPhase(query, conf, PATH_OUTPUT_FIRST, parser.getFilterTables());
 			}
 			if (state) { // init conf
 				Configuration conf = new Configuration();
-				state &= doSecondPhase(query, conf, PATH_OUTPUT_SECOND,
-						parser.getTables(), parser.getFilterTables(),
+				state &= doSecondPhase(query, conf, PATH_OUTPUT_SECOND, parser.getTables(), parser.getFilterTables(),
 						parser.getTables().length - 1);
 			}
 			if (state) {
 				Configuration conf = new Configuration();
-				state &= doThirdPhase(query.toUpperCase(), conf,
-						PATH_OUTPUT_THIRD);
+				state &= doThirdPhase(query.toUpperCase(), conf, PATH_OUTPUT_THIRD);
 			}
 			if (state) {
 				Configuration conf = new Configuration();
-				state &= doForthPhase(query.toUpperCase(), conf,
-						PATH_OUTPUT_FINAL);
+				state &= doForthPhase(query.toUpperCase(), conf, PATH_OUTPUT_FINAL);
 			}
 		}
 		return super.run(query);
 	}
 
 	@Override
-	protected boolean doForthPhase(String query, Configuration conf,
-			String outputPath) {
+	protected boolean doForthPhase(String query, Configuration conf, String outputPath) {
 		try {
 			conf.setLong(MAPRED_TASK_TIMEOUT, Long.MAX_VALUE);
 			Job job = new Job(conf, FUNCTION_NAME + " Final Phase " + query);
@@ -109,8 +101,7 @@ public class TJSGM extends MapReduceMain {
 	}
 
 	@Override
-	protected boolean doThirdPhase(String query, Configuration conf,
-			String outputPath) {
+	protected boolean doThirdPhase(String query, Configuration conf, String outputPath) {
 		try {
 			DistributedCache.addCacheFile(new URI(FULL_PATH_JOIN), conf);
 			conf.setLong(MAPRED_TASK_TIMEOUT, Long.MAX_VALUE);
@@ -138,15 +129,13 @@ public class TJSGM extends MapReduceMain {
 	}
 
 	@Override
-	protected boolean doFirstPhase(String query, Configuration conf,
-			String outputPath, String[] table) {
+	protected boolean doFirstPhase(String query, Configuration conf, String outputPath, String[] table) {
 		try {
 
 			// global information
 			DistributedCache.addCacheFile(new URI(FULL_PATH_COLUMN), conf);
 			DistributedCache.addCacheFile(new URI(FULL_PATH_FILTER), conf);
-			DistributedCache
-					.addCacheFile(new URI(FULL_PATH_FILTER_TABLE), conf);
+			DistributedCache.addCacheFile(new URI(FULL_PATH_FILTER_TABLE), conf);
 			DistributedCache.addCacheFile(new URI(FULL_PATH_JOIN), conf);
 
 			// new job
@@ -159,8 +148,7 @@ public class TJSGM extends MapReduceMain {
 
 			// filter table
 			for (String t : table) {
-				FileInputFormat.addInputPath(job, new Path(PATH_INPUT
-						+ SYSTEM_SPLIT + t + SYSTEM_SPLIT));
+				FileInputFormat.addInputPath(job, new Path(PATH_INPUT + SYSTEM_SPLIT + t + SYSTEM_SPLIT));
 			}
 			CheckAndDelete.checkAndDelete(outputPath, conf);
 			FileOutputFormat.setOutputPath(job, new Path(outputPath));
@@ -178,9 +166,8 @@ public class TJSGM extends MapReduceMain {
 	}
 
 	@Override
-	protected boolean doSecondPhase(String query, Configuration conf,
-			String outputPath, String[] table, String[] filter_table,
-			int numberOfReducer) {
+	protected boolean doSecondPhase(String query, Configuration conf, String outputPath, String[] table,
+			String[] filter_table, int numberOfReducer) {
 		try {
 			List<String> dimension_talbe = new ArrayList<String>();
 			dimension_talbe.add(TABLE_CUSTOMER);
@@ -192,8 +179,8 @@ public class TJSGM extends MapReduceMain {
 			DistributedCache.addCacheFile(new URI(FULL_PATH_JOIN), conf);
 
 			for (String t : filter_table) {
-				DistributedCache.addCacheFile(new URI(PATH_BLOOM_FILTER
-						+ SYSTEM_SPLIT + dimension_talbe.indexOf(t)), conf);
+				DistributedCache.addCacheFile(new URI(PATH_BLOOM_FILTER + SYSTEM_SPLIT + dimension_talbe.indexOf(t)),
+						conf);
 			}
 			conf.setLong(MAPRED_TASK_TIMEOUT, Long.MAX_VALUE);
 			Job job = new Job(conf, FUNCTION_NAME + " Second Phase " + query);
@@ -204,8 +191,7 @@ public class TJSGM extends MapReduceMain {
 			job.setReducerClass(SecondPhaseReducer.class);
 			job.setOutputKeyClass(QuadTextPair.class);
 			job.setOutputValueClass(Text.class);
-			FileInputFormat.addInputPath(job, new Path(PATH_INPUT
-					+ SYSTEM_SPLIT + TABLE_LINEORDER + SYSTEM_SPLIT));// fact
+			FileInputFormat.addInputPath(job, new Path(PATH_INPUT + SYSTEM_SPLIT + TABLE_LINEORDER + SYSTEM_SPLIT));// fact
 			FileInputFormat.addInputPath(job, new Path(PATH_OUTPUT_FIRST));// 第一階段結果
 			List<String> list = new ArrayList<String>();
 			for (String s : table) {// all need table
@@ -217,8 +203,7 @@ public class TJSGM extends MapReduceMain {
 				list.remove(s);
 			}
 			for (String t : list) {// non-filter table
-				FileInputFormat.addInputPath(job, new Path(PATH_INPUT
-						+ SYSTEM_SPLIT + t + SYSTEM_SPLIT));
+				FileInputFormat.addInputPath(job, new Path(PATH_INPUT + SYSTEM_SPLIT + t + SYSTEM_SPLIT));
 			}
 			CheckAndDelete.checkAndDelete(outputPath, conf);
 			FileOutputFormat.setOutputPath(job, new Path(outputPath));

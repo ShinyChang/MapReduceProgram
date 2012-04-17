@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Scanner;
 
 import com.mrp.lib.ConditionValidator;
-import com.mrp.parser.SQLParser;
+import com.mrp.lib.SQLParser;
 import com.mrp.tjsgm.TJSGM;
 
 public class Main {

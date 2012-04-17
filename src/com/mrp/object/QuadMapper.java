@@ -19,29 +19,31 @@ public class QuadMapper extends Mapper<Object, Text, QuadTextPair, Text> {
 	protected int joinIndex = -1;
 	protected String fileName;
 
-	protected final String[] DIMENSION_TABLE_INDEX = { "customer.tbl",
-			"date.tbl", "part.tbl", "supplier.tbl" };
-	protected final String[][] SCHEMA = {
-			{ "c_custkey", "c_name", "c_address", "c_city", "c_nation",
-					"c_region", "c_phone", "c_mktsegment" },
-			{ "d_datekey", "d_date", "d_dayofweek", "d_month", "d_year",
-					"d_yearmonthnum", "d_yearmonth", "d_daynuminweek",
-					"d_daynuminmonth", "d_daynuminyear", "d_monthnuminyear",
-					"d_weeknuminyear", "d_sellingseason", "d_lastdayinmonthfl",
-					"d_holidayfl", "d_weekdayfl", "d_daynuminmonth" },
-			{ "p_partkey", "p_name", "p_mfgr", "p_category", "p_brand1",
-					"p_color", "p_type", "p_size", "p_container" },
-			{ "s_suppkey", "s_name", "s_address", "s_city", "s_nation",
-					"s_region", "s_phone" } };
+	protected final String VERTICALBAR = "|";
+	protected final String TAB = "\t";
+	protected final String MINUS = "-";
+	protected final String RIGHT_BRACKET = ")";
+	protected final String LEFT_BRACKET = "(";
+	protected final String SUM = "sum";
+	protected final String UNDER_LINE = "_";
+	protected final String DIMENSION_TABLE_SIGN = "D";
+	protected final String FACT_TABLE_SIGN = "F";
+	protected final String COMMA = ",";
+	protected final String WHITE_SPACE = " ";
 
-	protected final String[] FACT_TABLE_SCHEMA = { "lo_orderkey",
-			"lo_linenumber", "lo_custkey", "lo_partkey", "lo_suppkey",
-			"lo_orderdate", "lo_ordpriority", "lo_shippriority", "lo_quantity",
-			"lo_extendedprice", "lo_ordtotalprice", "lo_discount",
-			"lo_revenue", "lo_supplycost", "lo_tax", "lo_commitdate",
-			"lo_shipmode" };
-	protected final int[] FACT_TABLE_FOREIGN_INDEX = { -1, -1, 0, 2, 3, 1, -1,
-			-1, -1, -1, -1, -1, -1, -1, -1, 1, -1 };
+	protected final String[] DIMENSION_TABLE_INDEX = { "customer.tbl", "date.tbl", "part.tbl", "supplier.tbl" };
+	protected final String[][] SCHEMA = {
+			{ "c_custkey", "c_name", "c_address", "c_city", "c_nation", "c_region", "c_phone", "c_mktsegment" },
+			{ "d_datekey", "d_date", "d_dayofweek", "d_month", "d_year", "d_yearmonthnum", "d_yearmonth",
+					"d_daynuminweek", "d_daynuminmonth", "d_daynuminyear", "d_monthnuminyear", "d_weeknuminyear",
+					"d_sellingseason", "d_lastdayinmonthfl", "d_holidayfl", "d_weekdayfl", "d_daynuminmonth" },
+			{ "p_partkey", "p_name", "p_mfgr", "p_category", "p_brand1", "p_color", "p_type", "p_size", "p_container" },
+			{ "s_suppkey", "s_name", "s_address", "s_city", "s_nation", "s_region", "s_phone" } };
+
+	protected final String[] FACT_TABLE_SCHEMA = { "lo_orderkey", "lo_linenumber", "lo_custkey", "lo_partkey",
+			"lo_suppkey", "lo_orderdate", "lo_ordpriority", "lo_shippriority", "lo_quantity", "lo_extendedprice",
+			"lo_ordtotalprice", "lo_discount", "lo_revenue", "lo_supplycost", "lo_tax", "lo_commitdate", "lo_shipmode" };
+	protected final int[] FACT_TABLE_FOREIGN_INDEX = { -1, -1, 0, 2, 3, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 1, -1 };
 	protected final String[] OP = { ">=", "<=", ">", "<", "!=", "=" };
 
 	protected void readTableIndex(Context context) {
@@ -63,8 +65,7 @@ public class QuadMapper extends Mapper<Object, Text, QuadTextPair, Text> {
 		for (int i = 0; i < join.size(); i++) {
 			for (int j = 0; j < OP.length; j++) {
 				if (join.get(i).indexOf(OP[j]) > 0) {
-					if (first_word.equals(String.valueOf(join.get(i).split(
-							OP[j])[1].trim().charAt(0)))) {
+					if (first_word.equals(String.valueOf(join.get(i).split(OP[j])[1].trim().charAt(0)))) {
 						joinIndex = i * 6 + j;
 					}
 					break;

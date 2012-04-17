@@ -1,4 +1,4 @@
-package com.mrp.parser;
+package com.mrp.lib;
 
 import java.io.BufferedReader;
 import java.io.File;
