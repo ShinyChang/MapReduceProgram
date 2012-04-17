@@ -22,7 +22,6 @@ public class ThirdPhaseReducer extends DefaultReducer {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
 	}
 
 	@Override
@@ -36,7 +35,9 @@ public class ThirdPhaseReducer extends DefaultReducer {
 		List<String> RF = new ArrayList<String>();
 		String tmp;
 		String[] tmpValue;
+		System.out.println("key:"+key);
 		for (Text v : values) {
+			System.out.println("value:"+v);
 			tmp = v.toString();
 			tmpValue = tmp.split(TAB);
 			tableIndex = Integer.parseInt(tmpValue[0]);
@@ -57,8 +58,8 @@ public class ThirdPhaseReducer extends DefaultReducer {
 				}
 			}
 
-			// THETA JOIN
-			if (++cnt >= COUNT_OF_TABLE) {
+			//FIXME 不能支援Theta join
+			if(!RF.contains(tmpValue[tmpValue.length - 1])){
 				RF.add(tmpValue[tmpValue.length - 1]);
 			}
 
