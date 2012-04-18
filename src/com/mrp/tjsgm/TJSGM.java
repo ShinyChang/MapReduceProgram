@@ -16,44 +16,22 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 import com.mrp.lib.CheckAndDelete;
 import com.mrp.lib.SQLParser;
-import com.mrp.lib.WriteHDFS;
-import com.mrp.object.MapReduceMain;
+import com.mrp.object.DefaultMain;
 import com.mrp.object.QuadTextPair;
-import com.mrp.shared.FinalPhaseMapper;
-import com.mrp.shared.FinalPhaseReducer;
-import com.mrp.shared.ThirdPhaseMapper;
-import com.mrp.shared.ThirdPhaseReducer;
 
-public class TJSGM extends MapReduceMain {
-	private final String FUNCTION_NAME = "TJSGM";
-
-	protected void wrieteGlobalInfoToHDFS(SQLParser parser) {
-		WriteHDFS writeHDFS = new WriteHDFS();
-		writeHDFS.writeGlobalInfo(GLOBAL_INFO_COLUMN, parser.getColumns());
-		writeHDFS.writeGlobalInfo(GLOBAL_INFO_FILTER, parser.getFilters());
-		writeHDFS.writeGlobalInfo(GLOBAL_INFO_FILTER_TABLE, parser.getFilterTables());
-		writeHDFS.writeGlobalInfo(GLOBAL_INFO_JOIN, parser.getJoins());
-		writeHDFS.writeGlobalInfo(GLOBAL_INFO_TABLE, parser.getTables());
-		writeHDFS.writeGlobalInfo(GLOBAL_INFO_DIMENSION_TABLE, parser.getDimensionTables());
-		writeHDFS.writeGlobalInfo(GLOBAL_INFO_FACT_TABLE, parser.getFactTable());
-		writeHDFS.writeGlobalInfo(GLOBAL_INFO_GROUP_BY, parser.getGroupby());
-		writeHDFS.writeGlobalInfo(GLOBAL_INFO_ORDER_BY, parser.getOrderby());
-	}
+public class TJSGM extends DefaultMain {
 
 	@Override
 	public boolean run(String query) {
+		FUNCTION_NAME = "TJSGM";
 		query = query.toUpperCase();
 		boolean state = true;
-		boolean isThetaJoin;
 
 		SQLParser parser = new SQLParser();
 		state &= parser.parse(query + ".txt"); // file name
 		wrieteGlobalInfoToHDFS(parser);
 
 		if (state) {
-
-			// TODO Theta Join
-			isThetaJoin = parser.isThetaJoin();
 
 			if (state) { // init conf
 				Configuration conf = new Configuration();
@@ -73,59 +51,7 @@ public class TJSGM extends MapReduceMain {
 				state &= doForthPhase(query.toUpperCase(), conf, PATH_OUTPUT_FINAL);
 			}
 		}
-		return super.run(query);
-	}
-
-	@Override
-	protected boolean doForthPhase(String query, Configuration conf, String outputPath) {
-		try {
-			conf.setLong(MAPRED_TASK_TIMEOUT, Long.MAX_VALUE);
-			Job job = new Job(conf, FUNCTION_NAME + " Final Phase " + query);
-			job.setJarByClass(TJSGM.class);
-			job.setMapperClass(FinalPhaseMapper.class);
-			job.setReducerClass(FinalPhaseReducer.class);
-			job.setOutputKeyClass(Text.class);
-			job.setOutputValueClass(Text.class);
-			FileInputFormat.addInputPath(job, new Path(PATH_OUTPUT_THIRD));// merge_output
-			CheckAndDelete.checkAndDelete(outputPath, conf);
-			FileOutputFormat.setOutputPath(job, new Path(outputPath));
-			return job.waitForCompletion(true);
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		}
-		return false;
-	}
-
-	@Override
-	protected boolean doThirdPhase(String query, Configuration conf, String outputPath) {
-		try {
-			DistributedCache.addCacheFile(new URI(FULL_PATH_JOIN), conf);
-			conf.setLong(MAPRED_TASK_TIMEOUT, Long.MAX_VALUE);
-			Job job = new Job(conf, FUNCTION_NAME + " Third Phase " + query);
-			job.setJarByClass(TJSGM.class);
-			job.setMapperClass(ThirdPhaseMapper.class);
-			job.setReducerClass(ThirdPhaseReducer.class);
-			job.setOutputKeyClass(Text.class);
-			job.setOutputValueClass(Text.class);
-			FileInputFormat.addInputPath(job, new Path(PATH_OUTPUT_SECOND));// SnG_output
-
-			CheckAndDelete.checkAndDelete(outputPath, conf);
-			FileOutputFormat.setOutputPath(job, new Path(outputPath));
-			return job.waitForCompletion(true);
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		} catch (URISyntaxException e) {
-			e.printStackTrace();
-		}
-		return false;
+		return state;
 	}
 
 	@Override
