@@ -12,8 +12,8 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 
-public class QuadMapper extends Mapper<Object, Text, QuadTextPair, Text> {
-	protected QuadTextPair outputKey;
+public class DefaultMapper<T> extends Mapper<Object, Text, T, Text> {
+	protected T outputKey;
 	protected Text outputValue = new Text();
 	protected int tableIndex = -1;
 	protected int joinIndex = -1;

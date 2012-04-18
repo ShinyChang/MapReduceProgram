@@ -10,7 +10,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
 
-public class DefaultReducer extends Reducer<Text, Text, Text, Text> {
+public class DefaultReducer<KeyIn, KeyOut> extends Reducer<KeyIn, Text, KeyOut, Text> {
 	protected final String TAB = "\t";
 
 	protected List<String> readLocalFile(Path localFiles) throws IOException {

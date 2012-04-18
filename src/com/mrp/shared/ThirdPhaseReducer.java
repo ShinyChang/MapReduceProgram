@@ -11,7 +11,7 @@ import org.apache.hadoop.io.Text;
 
 import com.mrp.object.DefaultReducer;
 
-public class ThirdPhaseReducer extends DefaultReducer {
+public class ThirdPhaseReducer extends DefaultReducer<Text, Text> {
 	private int COUNT_OF_TABLE = 0;
 
 	@Override

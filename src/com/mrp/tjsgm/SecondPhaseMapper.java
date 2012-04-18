@@ -12,10 +12,10 @@ import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 
 import com.mrp.object.BloomFilter;
-import com.mrp.object.QuadMapper;
+import com.mrp.object.DefaultMapper;
 import com.mrp.object.QuadTextPair;
 
-public class SecondPhaseMapper extends QuadMapper {
+public class SecondPhaseMapper extends DefaultMapper<QuadTextPair> {
 	private final String FP_OUTPUT = "part-r-00000";
 
 	private List<String> column;

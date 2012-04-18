@@ -1,10 +1,29 @@
 package com.mrp.object;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.filecache.DistributedCache;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
-public class MapReduceMain {
+import com.mrp.lib.CheckAndDelete;
+import com.mrp.lib.SQLParser;
+import com.mrp.lib.WriteHDFS;
+import com.mrp.shared.FinalPhaseMapper;
+import com.mrp.shared.FinalPhaseReducer;
+import com.mrp.shared.ThirdPhaseMapper;
+import com.mrp.shared.ThirdPhaseReducer;
+import com.mrp.tjsgm.TJSGM;
+
+public class DefaultMain {
+	protected String FUNCTION_NAME = "Default";
 	protected final String SYSTEM_SPLIT = "/";
 	
 	// GLOBAL INFO
@@ -54,6 +73,19 @@ public class MapReduceMain {
 	// MAPREDUCE SYSTEM PARAMETER
 	protected final String MAPRED_TASK_TIMEOUT = "mapred.task.timeout";
 
+	protected void wrieteGlobalInfoToHDFS(SQLParser parser) {
+		WriteHDFS writeHDFS = new WriteHDFS();
+		writeHDFS.writeGlobalInfo(GLOBAL_INFO_COLUMN, parser.getColumns());
+		writeHDFS.writeGlobalInfo(GLOBAL_INFO_FILTER, parser.getFilters());
+		writeHDFS.writeGlobalInfo(GLOBAL_INFO_FILTER_TABLE, parser.getFilterTables());
+		writeHDFS.writeGlobalInfo(GLOBAL_INFO_JOIN, parser.getJoins());
+		writeHDFS.writeGlobalInfo(GLOBAL_INFO_TABLE, parser.getTables());
+		writeHDFS.writeGlobalInfo(GLOBAL_INFO_DIMENSION_TABLE, parser.getDimensionTables());
+		writeHDFS.writeGlobalInfo(GLOBAL_INFO_FACT_TABLE, parser.getFactTable());
+		writeHDFS.writeGlobalInfo(GLOBAL_INFO_GROUP_BY, parser.getGroupby());
+		writeHDFS.writeGlobalInfo(GLOBAL_INFO_ORDER_BY, parser.getOrderby());
+	}
+	
 	public boolean run(String query) {
 		return false;
 	}
@@ -63,24 +95,54 @@ public class MapReduceMain {
 		return false;
 	}
 
-	protected boolean doFirstPhase(String query, Configuration conf,
-			String outputPath, List<String> table) {
-		return false;
-	}
+	protected boolean doThirdPhase(String query, Configuration conf, String outputPath) {
+		try {
+			DistributedCache.addCacheFile(new URI(FULL_PATH_JOIN), conf);
+			conf.setLong(MAPRED_TASK_TIMEOUT, Long.MAX_VALUE);
+			Job job = new Job(conf, FUNCTION_NAME + " Third Phase " + query);
+			job.setJarByClass(TJSGM.class);
+			job.setMapperClass(ThirdPhaseMapper.class);
+			job.setReducerClass(ThirdPhaseReducer.class);
+			job.setOutputKeyClass(Text.class);
+			job.setOutputValueClass(Text.class);
+			FileInputFormat.addInputPath(job, new Path(PATH_OUTPUT_SECOND));// SnG_output
 
-	protected boolean doSecondPhase(String query, Configuration conf,
-			String outputPath, String[] table, List<String> filter_table,
-			int numberOfReducer) {
-		return false;
-	}
-
-	protected boolean doThirdPhase(String query, Configuration conf,
-			String outputPath) {
+			CheckAndDelete.checkAndDelete(outputPath, conf);
+			FileOutputFormat.setOutputPath(job, new Path(outputPath));
+			return job.waitForCompletion(true);
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+		}
 		return false;
 	}
 
 	protected boolean doForthPhase(String query, Configuration conf,
 			String outputPath)  {
+		try {
+			conf.setLong(MAPRED_TASK_TIMEOUT, Long.MAX_VALUE);
+			Job job = new Job(conf, FUNCTION_NAME + " Final Phase " + query);
+			job.setJarByClass(TJSGM.class);
+			job.setMapperClass(FinalPhaseMapper.class);
+			job.setReducerClass(FinalPhaseReducer.class);
+			job.setOutputKeyClass(Text.class);
+			job.setOutputValueClass(Text.class);
+			FileInputFormat.addInputPath(job, new Path(PATH_OUTPUT_THIRD));// merge_output
+			CheckAndDelete.checkAndDelete(outputPath, conf);
+			FileOutputFormat.setOutputPath(job, new Path(outputPath));
+			return job.waitForCompletion(true);
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}
 		return false;
 	}
 

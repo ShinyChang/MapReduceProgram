@@ -5,11 +5,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapreduce.Reducer;
 
+import com.mrp.object.DefaultReducer;
 import com.mrp.object.QuadTextPair;
 
-public class SecondPhaseReducer extends Reducer<QuadTextPair, Text, Text, Text> {
+public class SecondPhaseReducer extends DefaultReducer<QuadTextPair, Text> {
 	List<Integer> DimensionTableKey = new ArrayList<Integer>();
 	List<Integer> FactTableKey = new ArrayList<Integer>();
 	List<String> DimensionTableValue = new ArrayList<String>();
@@ -154,7 +154,7 @@ public class SecondPhaseReducer extends Reducer<QuadTextPair, Text, Text, Text> 
 					for (int j = 0; j < tmptmp.length; j++) {
 						if (!tmptmp[j].equals(EMPTY)) {
 							val_sb.append(tmptmp[j]);
-							val_sb.append("\t");
+							val_sb.append(TAB);
 						}
 					}
 				}

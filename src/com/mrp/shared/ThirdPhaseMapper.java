@@ -6,7 +6,7 @@ import org.apache.hadoop.io.Text;
 
 import com.mrp.object.DefaultMapper;
 
-public class ThirdPhaseMapper extends DefaultMapper {
+public class ThirdPhaseMapper extends DefaultMapper<Text> {
 
 	@Override
 	public void map(Object key, Text value, Context context)

@@ -9,10 +9,10 @@ import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 
 import com.mrp.lib.ConditionValidator;
-import com.mrp.object.QuadMapper;
+import com.mrp.object.DefaultMapper;
 import com.mrp.object.QuadTextPair;
 
-public class FirstPhaseMapper extends QuadMapper {
+public class FirstPhaseMapper extends DefaultMapper<QuadTextPair> {
 	private List<String> column;
 	private List<String> filter;
 	ConditionValidator conditionValidator = new ConditionValidator();

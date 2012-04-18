@@ -1,7 +1,5 @@
 package com.mrp.tjsgm;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,12 +11,12 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapreduce.Reducer;
 
 import com.mrp.object.BloomFilter;
+import com.mrp.object.DefaultReducer;
 import com.mrp.object.QuadTextPair;
 
-public class FirstPhaseReducer extends Reducer<QuadTextPair, Text, QuadTextPair, Text> {
+public class FirstPhaseReducer extends DefaultReducer<QuadTextPair, QuadTextPair> {
 
 	private static List<String> DIMENSION_TABLE;
 	private BloomFilter<IntWritable>[] bloomfilter;
@@ -26,17 +24,6 @@ public class FirstPhaseReducer extends Reducer<QuadTextPair, Text, QuadTextPair,
 	private FSDataOutputStream[] out;
 	private final List<Integer> index = new ArrayList<Integer>();
 	private final String PATH_BLOOM_FILTER = "MRP/bloomfilter/";
-
-	protected List<String> readLocalFile(Path localFiles) throws IOException {
-		List<String> tmpList = new ArrayList<String>();
-		FileReader fr = new FileReader(localFiles.toString());
-		BufferedReader br = new BufferedReader(fr);
-		while (br.ready()) {
-			tmpList.add(br.readLine());
-		}
-		br.close();
-		return tmpList;
-	}
 
 	@Override
 	public void setup(Context context) throws IOException, InterruptedException {

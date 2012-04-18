@@ -6,7 +6,7 @@ import org.apache.hadoop.io.Text;
 
 import com.mrp.object.DefaultReducer;
 
-public class FinalPhaseReducer extends DefaultReducer {
+public class FinalPhaseReducer extends DefaultReducer<Text, Text> {
 
 	@Override
 	public void reduce(Text key, Iterable<Text> values, Context context)
