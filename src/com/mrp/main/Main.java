@@ -5,9 +5,7 @@ import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Scanner;
 
-import com.mrp.lib.ConditionValidator;
-import com.mrp.lib.SQLParser;
-import com.mrp.tjsgm.TJSGM;
+import com.mrp.sgm.SGM;
 
 public class Main {
 	final String[] QUERY = { "Q2.1", "Q2.2", "Q2.3", "Q3.1", "Q3.2", "Q3.3",
@@ -126,7 +124,7 @@ public class Main {
 	}
 
 	private void debug() {
-		new TJSGM().run("Q3.4");
+		new SGM().run("Q3.4");
 	}
 
 	private int[] convertObjectArrayToIntegerArray(Object[] objectArray) {
