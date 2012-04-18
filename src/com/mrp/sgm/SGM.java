@@ -18,7 +18,6 @@ import com.mrp.lib.CheckAndDelete;
 import com.mrp.lib.SQLParser;
 import com.mrp.object.DefaultMain;
 import com.mrp.object.DoubleTextPair;
-import com.mrp.tjsgm.TJSGM;
 
 public class SGM extends DefaultMain {
 	
@@ -66,7 +65,7 @@ public class SGM extends DefaultMain {
 
 			// new job
 			Job job = new Job(conf, FUNCTION_NAME + " First Phase " + query);
-			job.setJarByClass(TJSGM.class);
+			job.setJarByClass(SGM.class);
 			job.setMapperClass(BloomFilterPhaseMapper.class);
 			job.setReducerClass(BloomFilterPhaseReducer.class);
 			job.setOutputKeyClass(DoubleTextPair.class);
@@ -110,7 +109,7 @@ public class SGM extends DefaultMain {
 			}
 			conf.setLong(MAPRED_TASK_TIMEOUT, Long.MAX_VALUE);
 			Job job = new Job(conf, FUNCTION_NAME + " Second Phase " + query);
-			job.setJarByClass(TJSGM.class);
+			job.setJarByClass(SGM.class);
 			job.setMapperClass(ScatterAndGatherPhaseMapper.class);
 			job.setNumReduceTasks(numberOfReducer);
 			job.setReducerClass(ScatterAndGatherPhaseReducer.class);

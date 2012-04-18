@@ -23,11 +23,13 @@ public class ConditionValidator {
 		boolean result = true;
 		boolean findColumn = false;
 		boolean or = false;
+		boolean nonFilter = true;
 		for (String filter : filters) {
 
 			// 尋找該欄位的篩選條件
 			if (filter.contains(SCHEMA[tableIndex][columnIndex])) {
 				findColumn = true;
+				nonFilter = false;
 				if (filter.contains(BETWEEN)) {
 					result &= validBetween(filter, value);
 				} else if (filter.contains(OR)) {
@@ -38,7 +40,7 @@ public class ConditionValidator {
 				}
 			}
 		}
-		return or || result && findColumn;
+		return or || result && findColumn || nonFilter;
 	}
 
 	private boolean validBetween(String filter, String value) {
