@@ -14,7 +14,6 @@ import org.apache.hadoop.io.Text;
 import com.mrp.object.BloomFilter;
 import com.mrp.object.DefaultMapper;
 import com.mrp.object.DoubleTextPair;
-import com.mrp.object.QuadTextPair;
 
 public class ScatterAndGatherPhaseMapper extends DefaultMapper<DoubleTextPair> {
 	private final String FP_OUTPUT = "part-r-00000";
@@ -157,7 +156,6 @@ public class ScatterAndGatherPhaseMapper extends DefaultMapper<DoubleTextPair> {
 		int bf_idx;
 
 		// BloomFilter 快速篩選
-		// TODO Theta Join
 		for (String fk : foreignKey) {
 			for (int i = 0; i < foreignKeyIndex.size(); i++) {
 				int fkIndex = foreignKeyIndex.get(i);
@@ -178,7 +176,6 @@ public class ScatterAndGatherPhaseMapper extends DefaultMapper<DoubleTextPair> {
 		}
 
 		// 經過BloomFilter篩選過後
-		int factTableJoinIndex = -1;
 		for (String fk : foreignKey) {// lo_orderdate, lo_partke, lo_suppkey
 			for (int i = 0; i < foreignKeyIndex.size(); i++) {// 5, 3, 4
 				int fkIndex = foreignKeyIndex.get(i);
@@ -186,21 +183,6 @@ public class ScatterAndGatherPhaseMapper extends DefaultMapper<DoubleTextPair> {
 
 				// 找到Foreign的Column
 				if (fk.equals(factTableColumnName)) {
-
-					// 尋找FactTable的joinIndex
-					for (int j = 0; j < join.size(); j++) {
-						String dimensionTableName = DIMENSION_TABLE_INDEX[FACT_TABLE_FOREIGN_INDEX[fkIndex]];
-
-						// 尋找對應於該DimensionTable的joinIndex
-						if (join.get(j).contains(dimensionTableName.substring(0, 1) + UNDER_LINE)) {
-							for (int k = 0; k < OP.length; k++) {
-								if (join.get(j).contains(OP[k])) {
-									factTableJoinIndex = j * 6 + k;
-									break;
-								}
-							}
-						}
-					}
 
 					// 建立Key
 					outputKey = new DoubleTextPair(new IntWritable(Integer.parseInt(columnValue[fkIndex])),
