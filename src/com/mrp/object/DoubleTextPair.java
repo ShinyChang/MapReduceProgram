@@ -32,9 +32,17 @@ public class DoubleTextPair implements WritableComparable<DoubleTextPair> {
 	public IntWritable getFirst() {
 		return first;
 	}
+	
+	public IntWritable getKey() {
+		return this.getFirst();
+	}
 
 	public IntWritable getSecond() {
 		return second;
+	}
+	
+	public IntWritable getIndex() {
+		return this.getSecond();
 	}
 
 	@Override
