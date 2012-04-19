@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
@@ -28,7 +29,7 @@ public class PRM extends DefaultMain {
 	private final String FP_OUTPUT = "part-r-00000";
 
 	@Override
-	public boolean run(String query) {
+	public long run(String query) {
 		FUNCTION_NAME = "PRM";
 		query = query.toUpperCase();
 		boolean state = true;
@@ -36,7 +37,8 @@ public class PRM extends DefaultMain {
 		SQLParser parser = new SQLParser();
 		state &= parser.parse(query + ".txt"); // file name
 		wrieteGlobalInfoToHDFS(parser);
-
+		
+		long startTime = new Date().getTime();
 		if (state) {
 
 			if (state) { // init conf
@@ -57,7 +59,7 @@ public class PRM extends DefaultMain {
 				state &= doForthPhase(query.toUpperCase(), conf, PATH_OUTPUT_FINAL);
 			}
 		}
-		return state;
+		return (new Date().getTime()) - startTime;
 	}
 
 	@Override
@@ -67,7 +69,7 @@ public class PRM extends DefaultMain {
 			// global information
 			DistributedCache.addCacheFile(new URI(FULL_PATH_COLUMN), conf);
 			DistributedCache.addCacheFile(new URI(FULL_PATH_FILTER), conf);
-			DistributedCache.addCacheFile(new URI(FULL_PATH_FILTER_TABLE), conf);
+			DistributedCache.addCacheFile(new URI(FULL_PATH_DIMENSION_TABLE), conf);
 			DistributedCache.addCacheFile(new URI(FULL_PATH_JOIN), conf);
 
 			// new job

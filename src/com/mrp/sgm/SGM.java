@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
@@ -22,14 +23,14 @@ import com.mrp.object.DoubleTextPair;
 public class SGM extends DefaultMain {
 	
 	@Override
-	public boolean run(String query) {
+	public long run(String query) {
 		FUNCTION_NAME = "SGM";
 		query = query.toUpperCase();
 		boolean state = true;
 		SQLParser parser = new SQLParser();
 		state &= parser.parse(query + ".txt"); // file name
 		wrieteGlobalInfoToHDFS(parser);
-
+		Long startTime = new Date().getTime();
 		if(state){
 			if(state){
 				Configuration conf = new Configuration();
@@ -50,7 +51,7 @@ public class SGM extends DefaultMain {
 			}			
 			
 		}
-		return state;
+		return (new Date().getTime()) - startTime;
 	}
 
 	@Override

@@ -6,10 +6,11 @@ import java.util.List;
 import java.util.Scanner;
 
 import com.mrp.prm.PRM;
+import com.mrp.sgm.SGM;
+import com.mrp.tjsgm.TJSGM;
 
 public class Main {
-	final String[] QUERY = { "Q2.1", "Q2.2", "Q2.3", "Q3.1", "Q3.2", "Q3.3",
-			"Q3.4", "Q4.1", "Q4.2", "Q4.3" };
+	final String[] QUERY = { "Q2.1", "Q2.2", "Q2.3", "Q3.1", "Q3.2", "Q3.3", "Q3.4", "Q4.1", "Q4.2", "Q4.3" };
 	private Scanner scanner = new Scanner(System.in);
 
 	public static void main(String[] args) {
@@ -17,7 +18,7 @@ public class Main {
 	}
 
 	Main() {
-		
+
 		int choose = chooseExperiment();
 		if (choose < 0) {
 			ERROR("Experiment choose error.");
@@ -25,7 +26,7 @@ public class Main {
 		} else {
 			runExperiment(choose);
 		}
-	
+
 	}
 
 	private int chooseExperiment() {
@@ -94,7 +95,6 @@ public class Main {
 
 	private void runExperiment(int runType) {
 		int[] query = convertObjectArrayToIntegerArray(chooseQuery());
-		print(query);
 		if (query == null || query.length == 0) {
 			ERROR("Query choose error.");
 			return;
@@ -104,7 +104,7 @@ public class Main {
 			debug();
 			break;
 		case 1:
-			// runExperiment1(round);
+			runExperiment1(query);
 			break;
 		case 2:
 			break;
@@ -123,10 +123,46 @@ public class Main {
 		}
 	}
 
+	private void runExperiment1(int[] query) {
+		System.out.print("How many rounds you want? ");
+		int round = scanner.nextInt();
+		SGM sgm = new SGM();
+		TJSGM tjsgm = new TJSGM();
+		PRM prm = new PRM();
+		long[][][] result = new long[3][round][query.length];
+		for (int j = 0; j < round; j++) {
+			for (int i = 0; i < query.length; i++) {
+				result[0][j][i] = sgm.run(QUERY[query[i]]);
+			}
+			for (int i = 0; i < query.length; i++) {
+				result[1][j][i] = tjsgm.run(QUERY[query[i]]);
+			}
+			for (int i = 0; i < query.length; i++) {
+				result[2][j][i] = prm.run(QUERY[query[i]]);
+			}
+		}
+
+		// print
+		String[] Q = { "SGM", "TJSGM", "PRM" };
+		for (int i = 0; i < result.length; i++) {
+			System.out.println("Algorithm:" + Q[i]);
+			for (int j = 0; j < result[i].length; j++) {
+				for(int k = 0; k < result[i][j].length; k++){
+					System.out.print(QUERY[query[k]]+"\t");
+				}
+				System.out.println();
+				for (long q : result[i][j]) {
+					System.out.print(q + "\t");
+				}
+				System.out.println();
+			}
+		}
+	}
+
 	private void debug() {
-//		new SGM().run("Q3.4");
-//		new TJSGM().run("Q3.4");
-		new PRM().run("Q4.3");
+		// new SGM().run("Q3.4");
+		// new TJSGM().run("Q3.4");
+		new PRM().run("Q2.1");
 	}
 
 	private int[] convertObjectArrayToIntegerArray(Object[] objectArray) {

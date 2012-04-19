@@ -24,7 +24,13 @@ public class ConditionValidator {
 		boolean findColumn = false;
 		boolean or = false;
 		boolean nonFilter = true;
+		if(tableIndex == 1){
+			System.out.println("This is Date");
+		}
 		for (String filter : filters) {
+			if(tableIndex == 1){
+				System.out.println("nonFilter:"+nonFilter);
+			}
 
 			// 尋找該欄位的篩選條件
 			if (filter.contains(SCHEMA[tableIndex][columnIndex])) {
@@ -40,7 +46,7 @@ public class ConditionValidator {
 				}
 			}
 		}
-		return or || result && findColumn || nonFilter;
+		return or || (result && findColumn) || nonFilter;
 	}
 
 	private boolean validBetween(String filter, String value) {

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
@@ -22,7 +23,7 @@ import com.mrp.object.QuadTextPair;
 public class TJSGM extends DefaultMain {
 
 	@Override
-	public boolean run(String query) {
+	public long run(String query) {
 		FUNCTION_NAME = "TJSGM";
 		query = query.toUpperCase();
 		boolean state = true;
@@ -31,6 +32,7 @@ public class TJSGM extends DefaultMain {
 		state &= parser.parse(query + ".txt"); // file name
 		wrieteGlobalInfoToHDFS(parser);
 
+		long startTime = new Date().getTime();
 		if (state) {
 
 			if (state) { // init conf
@@ -51,7 +53,7 @@ public class TJSGM extends DefaultMain {
 				state &= doForthPhase(query.toUpperCase(), conf, PATH_OUTPUT_FINAL);
 			}
 		}
-		return state;
+		return (new Date().getTime()) - startTime;
 	}
 
 	@Override

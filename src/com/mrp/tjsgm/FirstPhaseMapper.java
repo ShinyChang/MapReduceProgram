@@ -38,7 +38,7 @@ public class FirstPhaseMapper extends DefaultMapper<QuadTextPair> {
 		// 建立Key <primaryKey, tableIndex, joinCondition>
 		outputKey = new QuadTextPair(new IntWritable(Integer.parseInt(columnValue[0])), new IntWritable(tableIndex),
 				new IntWritable(joinIndex), new Text(DIMENSION_TABLE_SIGN));
-		boolean result = false;
+		boolean result = true;
 
 		// find column & check it
 		for (String c : filter) {
