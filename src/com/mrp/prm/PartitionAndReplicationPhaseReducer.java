@@ -11,10 +11,9 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
 
 import com.mrp.object.DefaultReducer;
-import com.mrp.object.DoubleTextPair;
 import com.mrp.object.QuadTextPair;
 
-public class PartitionAndReplicationPhaseReducer extends DefaultReducer<DoubleTextPair, Text> {
+public class PartitionAndReplicationPhaseReducer extends DefaultReducer<QuadTextPair, Text> {
 	List<Integer> DimensionTableKey = new ArrayList<Integer>();
 	List<Integer> FactTableKey = new ArrayList<Integer>();
 	List<String> DimensionTableValue = new ArrayList<String>();
@@ -37,7 +36,7 @@ public class PartitionAndReplicationPhaseReducer extends DefaultReducer<DoubleTe
 		// read distributed catch file
 		try {
 			Path[] localFiles = DistributedCache.getLocalCacheFiles(context.getConfiguration());
-			COUNT_OF_TABLE = readLocalFile(localFiles[2]).size();
+			COUNT_OF_TABLE = readLocalFile(localFiles[1]).size();
 
 			// init
 			TABLE_KEY = new ArrayList[COUNT_OF_TABLE];
@@ -57,7 +56,11 @@ public class PartitionAndReplicationPhaseReducer extends DefaultReducer<DoubleTe
 					TABLE_MAP.add(tmp[1]);
 				}
 				TABLE_KEY[TABLE_MAP.indexOf(tmp[1])].add(Integer.parseInt(tmp[0]));// pki
-				TABLE_VALUE[TABLE_MAP.indexOf(tmp[1])].add(tmp[4]);// col
+				if (tmp.length < 5) {
+					TABLE_VALUE[TABLE_MAP.indexOf(tmp[1])].add(EMPTY);// col
+				} else {
+					TABLE_VALUE[TABLE_MAP.indexOf(tmp[1])].add(tmp[4]);// col
+				}
 			}
 			br.close();
 		} catch (IOException e) {
@@ -69,7 +72,6 @@ public class PartitionAndReplicationPhaseReducer extends DefaultReducer<DoubleTe
 	public void reduce(QuadTextPair key, Iterable<Text> values, Context context) throws IOException,
 			InterruptedException {
 		int type = Integer.parseInt(key.getJoinCondition().toString());
-		// System.out.println("type:"+type);
 		int table_idx = TABLE_MAP.indexOf(key.getIndex().toString());
 		String tmpArray[];
 		StringBuffer key_sb = new StringBuffer();
