@@ -58,19 +58,23 @@ public class PartitionAndReplicationPhaseMapper extends DefaultMapper<QuadTextPa
 
 		// 新增Foreign Key
 		for (String joinCondition : join) {
+			System.out.println(join);
 			for (String op : OP) {
-				String[] tmp = joinCondition.split(op);
-				String fkName = tmp[0].trim();
-				String pkTableTitle = tmp[1].trim().substring(0, 1);
-				if (!foreignKey.contains(fkName)) {
-					foreignKey.add(fkName);
-				}
-				// 不是EQUAL JOIN的時候加入TABLEINDEX
-				if (!op.equals(OP[5])) {
-					for (int i = 0; i < DIMENSION_TABLE_INDEX.length; i++) {
-						if (DIMENSION_TABLE_INDEX[i].indexOf(pkTableTitle) == 0) {
-							thetaJoinTableIndex.add(i);
+				if (joinCondition.contains(op)) {
+					String[] tmp = joinCondition.split(op);
+					String fkName = tmp[0].trim();
+					String pkTableTitle = tmp[1].trim().substring(0, 1);
+					if (!foreignKey.contains(fkName)) {
+						foreignKey.add(fkName);
+					}
+					// 不是EQUAL JOIN的時候加入TABLEINDEX
+					if (!op.equals(OP[5])) {
+						for (int i = 0; i < DIMENSION_TABLE_INDEX.length; i++) {
+							if (DIMENSION_TABLE_INDEX[i].indexOf(pkTableTitle) == 0) {
+								thetaJoinTableIndex.add(i);
+							}
 						}
+						break;
 					}
 				}
 			}
@@ -108,7 +112,7 @@ public class PartitionAndReplicationPhaseMapper extends DefaultMapper<QuadTextPa
 
 		// BloomFilter 快速篩選
 		for (String fk : foreignKey) {
-			filter:for (int i = 0; i < foreignKeyIndex.size(); i++) {
+			filter: for (int i = 0; i < foreignKeyIndex.size(); i++) {
 				int fkIndex = foreignKeyIndex.get(i);
 				String factTableColumnName = FACT_TABLE_SCHEMA[fkIndex];
 
@@ -117,14 +121,16 @@ public class PartitionAndReplicationPhaseMapper extends DefaultMapper<QuadTextPa
 					bf_idx = bloomFilterMapping.indexOf(String.valueOf(FACT_TABLE_FOREIGN_INDEX[fkIndex]));
 					if (bf_idx >= 0) {
 						// 如果是ThetaJoin就不要篩選
-						for(int thetaindex : thetaJoinTableIndex){
-							if(thetaindex == bf_idx){
-								continue filter;
+						for (int thetaindex : thetaJoinTableIndex) {
+							if (thetaindex == bf_idx) {
+								break filter;
 							}
 						}
 						// 如果不存在BloomFilter裡面的話就離開
 						if (!bloomFilter[bf_idx].contains(new Text(columnValue[fkIndex]))) {
 							return;
+						} else {
+							break filter;
 						}
 					}
 				}
