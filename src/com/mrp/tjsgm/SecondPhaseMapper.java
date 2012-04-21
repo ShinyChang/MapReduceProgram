@@ -87,6 +87,7 @@ public class SecondPhaseMapper extends DefaultMapper<QuadTextPair> {
 								thetaJoinTableIndex.add(i);
 							}
 						}
+						break;
 					}
 				}
 			}
@@ -170,12 +171,12 @@ public class SecondPhaseMapper extends DefaultMapper<QuadTextPair> {
 		int bf_idx;
 
 		// BloomFilter 快速篩選
-		for (String fk : foreignKey) {
-
-			filter:for (int i = 0; i < foreignKeyIndex.size(); i++) {
+		filter:for (String fk : foreignKey) {
+			for (int i = 0; i < foreignKeyIndex.size(); i++) {
 				int fkIndex = foreignKeyIndex.get(i);
-				String factTableColumnName = FACT_TABLE_SCHEMA[fkIndex];
 
+				String factTableColumnName = FACT_TABLE_SCHEMA[fkIndex];
+				
 				// 找到Foreign的Column
 				if (fk.equals(factTableColumnName)) {
 
@@ -184,18 +185,21 @@ public class SecondPhaseMapper extends DefaultMapper<QuadTextPair> {
 						// 如果是ThetaJoin就不要篩選
 						for(int thetaindex : thetaJoinTableIndex){
 							if(thetaindex == bf_idx){
-								continue filter;
+								break filter;
 							}
 						}
 
 						// 如果不存在BloomFilter裡面的話就離開
 						if (!bloomFilter[bf_idx].contains(new Text(columnValue[fkIndex]))) {
 							return;
+						} else {
+							break filter;
 						}
 					}
 				}
 			}
 		}
+		
 
 		// 經過BloomFilter篩選過後
 		int factTableJoinIndex = -1;

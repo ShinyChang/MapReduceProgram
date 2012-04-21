@@ -161,8 +161,8 @@ public class Main {
 
 	private void debug() {
 		// new SGM().run("Q3.4");
-		 new TJSGM().run("THETA");
-//		new PRM().run("Q2.1");
+//		 new TJSGM().run("THETA");
+		new PRM().run("THETA");
 	}
 
 	private int[] convertObjectArrayToIntegerArray(Object[] objectArray) {
