@@ -3,41 +3,27 @@ package com.mrp.shared;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-import org.apache.hadoop.filecache.DistributedCache;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
 
 import com.mrp.object.DefaultReducer;
 
 public class ThirdPhaseReducer extends DefaultReducer<Text, Text> {
-	private int COUNT_OF_TABLE = 0;
-
-	@Override
-	public void setup(Context context) {
-		try {
-			Path[] localFiles = DistributedCache.getLocalCacheFiles(context.getConfiguration());
-			COUNT_OF_TABLE = readLocalFile(localFiles[0]).size();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
 
 	@Override
 	public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
 
 		int tableIndex;
-		int cnt = 0;
 		List<String> column = new ArrayList<String>();
 		List<Integer> columnIdx = new ArrayList<Integer>();
-
-		List<String> RF = new ArrayList<String>();
+		Map<Integer, Long> sumOfRfMap = new HashMap<Integer, Long>();
 		String tmp;
 		String[] tmpValue;
-		System.out.println("key:"+key);
+
 		for (Text v : values) {
-			System.out.println("value:"+v);
 			tmp = v.toString();
 			tmpValue = tmp.split(TAB);
 			tableIndex = Integer.parseInt(tmpValue[0]);
@@ -58,9 +44,10 @@ public class ThirdPhaseReducer extends DefaultReducer<Text, Text> {
 				}
 			}
 
-			//FIXME 不能支援Theta join
-			if(!RF.contains(tmpValue[tmpValue.length - 1])){
-				RF.add(tmpValue[tmpValue.length - 1]);
+			if (!sumOfRfMap.containsKey(tableIndex)) {
+				sumOfRfMap.put(tableIndex, Long.parseLong(tmpValue[tmpValue.length - 1]));
+			} else {
+				sumOfRfMap.put(tableIndex, sumOfRfMap.get(tableIndex) + Long.parseLong(tmpValue[tmpValue.length - 1]));
 			}
 
 		}
@@ -74,8 +61,26 @@ public class ThirdPhaseReducer extends DefaultReducer<Text, Text> {
 			sb.append(column.get(idx));
 			sb.append(TAB);
 		}
-		for (String rf : RF) {
-			context.write(new Text(sb.toString()), new Text(rf));
+
+		// equi-join
+		boolean isEquiJoin = true;
+
+		// get first key
+		long temp = sumOfRfMap.get(sumOfRfMap.keySet().toArray()[0]);
+		long MAX_RF = Long.MIN_VALUE;
+		for (int k : sumOfRfMap.keySet()) {
+			isEquiJoin &= temp == sumOfRfMap.get(k);
+		}
+		if (isEquiJoin) {
+			context.write(new Text(sb.toString()), new Text(String.valueOf(temp)));
+		} else {
+			// FIXLATER 只有支援一個Theta-join
+			for (int k : sumOfRfMap.keySet()) {
+				if (MAX_RF < sumOfRfMap.get(k)) {
+					MAX_RF = sumOfRfMap.get(k);
+				}
+			}
+			context.write(new Text(sb.toString()), new Text(String.valueOf(MAX_RF)));
 		}
 
 	}

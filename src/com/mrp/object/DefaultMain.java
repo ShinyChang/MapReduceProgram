@@ -97,7 +97,6 @@ public class DefaultMain {
 
 	protected boolean doThirdPhase(String query, Configuration conf, String outputPath) {
 		try {
-			DistributedCache.addCacheFile(new URI(FULL_PATH_JOIN), conf);
 			conf.setLong(MAPRED_TASK_TIMEOUT, Long.MAX_VALUE);
 			Job job = new Job(conf, FUNCTION_NAME + " Third Phase " + query);
 			job.setJarByClass(TJSGM.class);
@@ -116,9 +115,7 @@ public class DefaultMain {
 			e.printStackTrace();
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
-		} catch (URISyntaxException e) {
-			e.printStackTrace();
-		}
+		} 
 		return false;
 	}
 

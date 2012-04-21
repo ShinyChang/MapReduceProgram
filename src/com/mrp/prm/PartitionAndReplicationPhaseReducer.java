@@ -64,7 +64,6 @@ public class PartitionAndReplicationPhaseReducer extends DefaultReducer<QuadText
 			}
 			br.close();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

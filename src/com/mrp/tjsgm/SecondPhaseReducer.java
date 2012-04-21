@@ -22,8 +22,8 @@ public class SecondPhaseReducer extends DefaultReducer<QuadTextPair, Text> {
 	final String WHITE_SPACE = " ";
 	final String EMPTY = "";
 
-	private void writeOutput(Context context, int dimensionTableKey) throws IOException, InterruptedException {
-		String FTVtmp = FactTableValue.get(dimensionTableKey);
+	private void writeOutput(Context context, int factTableKey, int dimensionTableKey) throws IOException, InterruptedException {
+		String FTVtmp = FactTableValue.get(factTableKey);
 		context.write(
 				new Text(FTVtmp.substring(0, FTVtmp.lastIndexOf(COMMA + WHITE_SPACE))),
 
@@ -31,6 +31,7 @@ public class SecondPhaseReducer extends DefaultReducer<QuadTextPair, Text> {
 				new Text((type / 6)// table id
 						+ TAB
 						+ DimensionTableValue.get(dimensionTableKey)// Rdi
+						+ TAB
 						+ FTVtmp.substring(
 								FTVtmp.lastIndexOf(COMMA + WHITE_SPACE) + COMMA.length() + WHITE_SPACE.length(),
 								FTVtmp.length())));
@@ -44,7 +45,7 @@ public class SecondPhaseReducer extends DefaultReducer<QuadTextPair, Text> {
 			for (int i = 0; i < FactTableKey.size(); i++) {
 				for (int j = 0; j < DimensionTableKey.size(); j++) {
 					if (FactTableKey.get(i) >= DimensionTableKey.get(j)) {
-						writeOutput(context, j);
+						writeOutput(context, i, j);
 					}
 				}
 			}
@@ -53,7 +54,7 @@ public class SecondPhaseReducer extends DefaultReducer<QuadTextPair, Text> {
 			for (int i = 0; i < FactTableKey.size(); i++) {
 				for (int j = 0; j < DimensionTableKey.size(); j++) {
 					if (FactTableKey.get(i) <= DimensionTableKey.get(j)) {
-						writeOutput(context, j);
+						writeOutput(context, i, j);
 					}
 				}
 			}
@@ -62,7 +63,7 @@ public class SecondPhaseReducer extends DefaultReducer<QuadTextPair, Text> {
 			for (int i = 0; i < FactTableKey.size(); i++) {
 				for (int j = 0; j < DimensionTableKey.size(); j++) {
 					if (FactTableKey.get(i) > DimensionTableKey.get(j)) {
-						writeOutput(context, j);
+						writeOutput(context, i, j);
 					}
 				}
 			}
@@ -71,7 +72,7 @@ public class SecondPhaseReducer extends DefaultReducer<QuadTextPair, Text> {
 			for (int i = 0; i < FactTableKey.size(); i++) {
 				for (int j = 0; j < DimensionTableKey.size(); j++) {
 					if (FactTableKey.get(i) < DimensionTableKey.get(j)) {
-						writeOutput(context, j);
+						writeOutput(context, i, j);
 					}
 				}
 			}
@@ -80,7 +81,7 @@ public class SecondPhaseReducer extends DefaultReducer<QuadTextPair, Text> {
 			for (int i = 0; i < FactTableKey.size(); i++) {
 				for (int j = 0; j < DimensionTableKey.size(); j++) {
 					if (FactTableKey.get(i) != DimensionTableKey.get(j)) {
-						writeOutput(context, j);
+						writeOutput(context, i, j);
 					}
 				}
 			}

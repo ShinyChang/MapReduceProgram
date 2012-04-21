@@ -24,6 +24,7 @@ public class PartitionAndReplicationPhaseMapper extends DefaultMapper<QuadTextPa
 
 	private BloomFilter<Text>[] bloomFilter;
 	private final List<String> bloomFilterMapping = new ArrayList<String>();
+	private final List<Integer> thetaJoinTableIndex = new ArrayList<Integer>();
 	private int[] RF;
 	private final String EMPTY = "";
 
@@ -58,10 +59,18 @@ public class PartitionAndReplicationPhaseMapper extends DefaultMapper<QuadTextPa
 		// 新增Foreign Key
 		for (String joinCondition : join) {
 			for (String op : OP) {
-				if (joinCondition.contains(op)) {
-					String tmp = joinCondition.split(op)[0].trim();
-					if (!foreignKey.contains(tmp)) {
-						foreignKey.add(tmp);
+				String[] tmp = joinCondition.split(op);
+				String fkName = tmp[0].trim();
+				String pkTableTitle = tmp[1].trim().substring(0, 1);
+				if (!foreignKey.contains(fkName)) {
+					foreignKey.add(fkName);
+				}
+				// 不是EQUAL JOIN的時候加入TABLEINDEX
+				if (!op.equals(OP[5])) {
+					for (int i = 0; i < DIMENSION_TABLE_INDEX.length; i++) {
+						if (DIMENSION_TABLE_INDEX[i].indexOf(pkTableTitle) == 0) {
+							thetaJoinTableIndex.add(i);
+						}
 					}
 				}
 			}
@@ -98,9 +107,8 @@ public class PartitionAndReplicationPhaseMapper extends DefaultMapper<QuadTextPa
 		int bf_idx;
 
 		// BloomFilter 快速篩選
-		// TODO Theta Join
 		for (String fk : foreignKey) {
-			for (int i = 0; i < foreignKeyIndex.size(); i++) {
+			filter:for (int i = 0; i < foreignKeyIndex.size(); i++) {
 				int fkIndex = foreignKeyIndex.get(i);
 				String factTableColumnName = FACT_TABLE_SCHEMA[fkIndex];
 
@@ -108,7 +116,12 @@ public class PartitionAndReplicationPhaseMapper extends DefaultMapper<QuadTextPa
 				if (fk.equals(factTableColumnName)) {
 					bf_idx = bloomFilterMapping.indexOf(String.valueOf(FACT_TABLE_FOREIGN_INDEX[fkIndex]));
 					if (bf_idx >= 0) {
-
+						// 如果是ThetaJoin就不要篩選
+						for(int thetaindex : thetaJoinTableIndex){
+							if(thetaindex == bf_idx){
+								continue filter;
+							}
+						}
 						// 如果不存在BloomFilter裡面的話就離開
 						if (!bloomFilter[bf_idx].contains(new Text(columnValue[fkIndex]))) {
 							return;
