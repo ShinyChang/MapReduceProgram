@@ -172,6 +172,12 @@ public class SecondPhaseMapper extends DefaultMapper<QuadTextPair> {
 
 		// BloomFilter 快速篩選
 		filter:for (String fk : foreignKey) {
+			//FIXLATER 過濾Theta join的表格(利用foreignkey的特性)
+			for (int thetaindex : thetaJoinTableIndex) {
+				if (fk.indexOf(DIMENSION_TABLE_INDEX[thetaindex].substring(0, 1)) == 3) {
+					continue filter;
+				}
+			}
 			for (int i = 0; i < foreignKeyIndex.size(); i++) {
 				int fkIndex = foreignKeyIndex.get(i);
 
@@ -182,18 +188,11 @@ public class SecondPhaseMapper extends DefaultMapper<QuadTextPair> {
 
 					bf_idx = bloomFilterMapping.indexOf(String.valueOf(FACT_TABLE_FOREIGN_INDEX[fkIndex]));
 					if (bf_idx >= 0) {
-						// 如果是ThetaJoin就不要篩選
-						for(int thetaindex : thetaJoinTableIndex){
-							if(thetaindex == bf_idx){
-								break filter;
-							}
-						}
-
 						// 如果不存在BloomFilter裡面的話就離開
 						if (!bloomFilter[bf_idx].contains(new Text(columnValue[fkIndex]))) {
 							return;
 						} else {
-							break filter;
+							continue filter;
 						}
 					}
 				}

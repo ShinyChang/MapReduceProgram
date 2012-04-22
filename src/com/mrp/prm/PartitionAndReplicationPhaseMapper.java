@@ -58,7 +58,6 @@ public class PartitionAndReplicationPhaseMapper extends DefaultMapper<QuadTextPa
 
 		// 新增Foreign Key
 		for (String joinCondition : join) {
-			System.out.println(join);
 			for (String op : OP) {
 				if (joinCondition.contains(op)) {
 					String[] tmp = joinCondition.split(op);
@@ -111,8 +110,15 @@ public class PartitionAndReplicationPhaseMapper extends DefaultMapper<QuadTextPa
 		int bf_idx;
 
 		// BloomFilter 快速篩選
-		for (String fk : foreignKey) {
-			filter: for (int i = 0; i < foreignKeyIndex.size(); i++) {
+		filter: for (String fk : foreignKey) {
+			
+			//FIXLATER 過濾Theta join的表格(利用foreignkey的特性)
+			for (int thetaindex : thetaJoinTableIndex) {
+				if (fk.indexOf(DIMENSION_TABLE_INDEX[thetaindex].substring(0, 1)) == 3) {
+					continue filter;
+				}
+			}
+			for (int i = 0; i < foreignKeyIndex.size(); i++) {
 				int fkIndex = foreignKeyIndex.get(i);
 				String factTableColumnName = FACT_TABLE_SCHEMA[fkIndex];
 
@@ -120,17 +126,11 @@ public class PartitionAndReplicationPhaseMapper extends DefaultMapper<QuadTextPa
 				if (fk.equals(factTableColumnName)) {
 					bf_idx = bloomFilterMapping.indexOf(String.valueOf(FACT_TABLE_FOREIGN_INDEX[fkIndex]));
 					if (bf_idx >= 0) {
-						// 如果是ThetaJoin就不要篩選
-						for (int thetaindex : thetaJoinTableIndex) {
-							if (thetaindex == bf_idx) {
-								break filter;
-							}
-						}
 						// 如果不存在BloomFilter裡面的話就離開
 						if (!bloomFilter[bf_idx].contains(new Text(columnValue[fkIndex]))) {
 							return;
 						} else {
-							break filter;
+							continue filter;
 						}
 					}
 				}

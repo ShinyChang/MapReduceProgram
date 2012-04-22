@@ -3,8 +3,8 @@ select p_name, c_city, s_city, d_year, sum(lo_revenue) as revenue from customer,
      and lo_suppkey = s_suppkey 
      and lo_partkey >= p_partkey
      and lo_orderdate = d_datekey 
-      and (c_city='UNITED KI1' or c_city='UNITED KI5') 
-    and (s_city='UNITED KI1' or s_city='UNITED KI5') 
+      and c_city='UNITED KI1' 
+    and s_city='UNITED KI1'
     and d_yearmonth = 'Dec1997' 
     and p_name = 'moccasin frosted'
   group by p_name, c_city, s_city, d_year 

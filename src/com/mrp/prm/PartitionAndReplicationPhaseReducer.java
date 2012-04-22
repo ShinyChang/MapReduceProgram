@@ -62,49 +62,54 @@ public class PartitionAndReplicationPhaseReducer extends DefaultReducer<QuadText
 					TABLE_VALUE[TABLE_MAP.indexOf(tmp[1])].add(tmp[4]);// col
 				}
 			}
+
 			br.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
+	private void writeOutput(Context context, int table_idx, int tableKeyIndex, Text value) throws IOException,
+			InterruptedException {
+		String rDi = TABLE_VALUE[table_idx].get(tableKeyIndex);
+		String[] tmpArray = value.toString().split(COMMA + WHITE_SPACE);
+		StringBuffer key_sb = new StringBuffer();
+		StringBuffer val_sb = new StringBuffer();
+
+		// without rf
+		for (int j = 0; j < tmpArray.length - 1; j++) {
+			key_sb.append(tmpArray[j]);
+			key_sb.append(COMMA + WHITE_SPACE);
+		}
+		// delete ", "
+		key_sb.delete(key_sb.length() - 2, key_sb.length());
+
+		// column set start
+		val_sb.append(table_idx);
+		val_sb.append(TAB);
+		// column set end
+
+		if (rDi.equals(EMPTY)) {
+			val_sb.append(tmpArray[tmpArray.length - 1]);
+		} else {
+			val_sb.append(rDi);
+			val_sb.append(TAB);
+			val_sb.append(tmpArray[tmpArray.length - 1]);
+		}
+		context.write(new Text(key_sb.toString()), new Text(val_sb.toString()));
+	}
+
 	public void reduce(QuadTextPair key, Iterable<Text> values, Context context) throws IOException,
 			InterruptedException {
 		int type = Integer.parseInt(key.getJoinCondition().toString());
 		int table_idx = TABLE_MAP.indexOf(key.getIndex().toString());
-		String tmpArray[];
-		StringBuffer key_sb = new StringBuffer();
-		StringBuffer val_sb = new StringBuffer();
-		String rDi;
+
 		switch (type % 6) {
 		case 0:// >=
 			for (Text v : values) {
 				for (int i = 0; i < TABLE_KEY[table_idx].size(); i++) {
 					if (TABLE_KEY[table_idx].get(i).compareTo(Integer.parseInt(key.getKey().toString())) <= 0) {
-						rDi = TABLE_VALUE[table_idx].get(i);
-						tmpArray = v.toString().split(COMMA + WHITE_SPACE);
-						for (int j = 0; j < tmpArray.length - 1; j++) {// without
-							// rf
-							key_sb.append(tmpArray[j]);
-							key_sb.append(COMMA + WHITE_SPACE);
-						}
-						key_sb.delete(key_sb.length() - 2, key_sb.length());// delete
-						// ", "
-						// column set start
-						val_sb.append(key.getIndex());
-						val_sb.append(TAB);
-						// column set end
-
-						if (rDi.equals(EMPTY)) {
-							val_sb.append(tmpArray[tmpArray.length - 1]);
-						} else {
-							val_sb.append(rDi);
-							val_sb.append(TAB);
-							val_sb.append(tmpArray[tmpArray.length - 1]);
-						}
-						context.write(new Text(key_sb.toString()), new Text(val_sb.toString()));
-						val_sb.delete(0, val_sb.length());
-						key_sb.delete(0, key_sb.length());
+						writeOutput(context, table_idx, i, v);
 					}
 				}
 			}
@@ -113,30 +118,7 @@ public class PartitionAndReplicationPhaseReducer extends DefaultReducer<QuadText
 			for (Text v : values) {
 				for (int i = 0; i < TABLE_KEY[table_idx].size(); i++) {
 					if (TABLE_KEY[table_idx].get(i).compareTo(Integer.parseInt(key.getKey().toString())) >= 0) {
-						rDi = TABLE_VALUE[table_idx].get(i);
-						tmpArray = v.toString().split(COMMA + WHITE_SPACE);
-						for (int j = 0; j < tmpArray.length - 1; j++) {// without
-							// rf
-							key_sb.append(tmpArray[j]);
-							key_sb.append(COMMA + WHITE_SPACE);
-						}
-						key_sb.delete(key_sb.length() - 2, key_sb.length());// delete
-						// ", "
-						// column set start
-						val_sb.append(key.getIndex());
-						val_sb.append(TAB);
-						// column set end
-
-						if (rDi.equals(EMPTY)) {
-							val_sb.append(tmpArray[tmpArray.length - 1]);
-						} else {
-							val_sb.append(rDi);
-							val_sb.append(TAB);
-							val_sb.append(tmpArray[tmpArray.length - 1]);
-						}
-						context.write(new Text(key_sb.toString()), new Text(val_sb.toString()));
-						val_sb.delete(0, val_sb.length());
-						key_sb.delete(0, key_sb.length());
+						writeOutput(context, table_idx, i, v);
 					}
 				}
 			}
@@ -145,30 +127,7 @@ public class PartitionAndReplicationPhaseReducer extends DefaultReducer<QuadText
 			for (Text v : values) {
 				for (int i = 0; i < TABLE_KEY[table_idx].size(); i++) {
 					if (TABLE_KEY[table_idx].get(i).compareTo(Integer.parseInt(key.getKey().toString())) < 0) {
-						rDi = TABLE_VALUE[table_idx].get(i);
-						tmpArray = v.toString().split(COMMA + WHITE_SPACE);
-						for (int j = 0; j < tmpArray.length - 1; j++) {// without
-							// rf
-							key_sb.append(tmpArray[j]);
-							key_sb.append(COMMA + WHITE_SPACE);
-						}
-						key_sb.delete(key_sb.length() - 2, key_sb.length());// delete
-						// ", "
-						// column set start
-						val_sb.append(key.getIndex());
-						val_sb.append(TAB);
-						// column set end
-
-						if (rDi.equals(EMPTY)) {
-							val_sb.append(tmpArray[tmpArray.length - 1]);
-						} else {
-							val_sb.append(rDi);
-							val_sb.append(TAB);
-							val_sb.append(tmpArray[tmpArray.length - 1]);
-						}
-						context.write(new Text(key_sb.toString()), new Text(val_sb.toString()));
-						val_sb.delete(0, val_sb.length());
-						key_sb.delete(0, key_sb.length());
+						writeOutput(context, table_idx, i, v);
 					}
 				}
 			}
@@ -177,30 +136,7 @@ public class PartitionAndReplicationPhaseReducer extends DefaultReducer<QuadText
 			for (Text v : values) {
 				for (int i = 0; i < TABLE_KEY[table_idx].size(); i++) {
 					if (TABLE_KEY[table_idx].get(i).compareTo(Integer.parseInt(key.getKey().toString())) > 0) {
-						rDi = TABLE_VALUE[table_idx].get(i);
-						tmpArray = v.toString().split(COMMA + WHITE_SPACE);
-						for (int j = 0; j < tmpArray.length - 1; j++) {// without
-							// rf
-							key_sb.append(tmpArray[j]);
-							key_sb.append(COMMA + WHITE_SPACE);
-						}
-						key_sb.delete(key_sb.length() - 2, key_sb.length());// delete
-						// ", "
-						// column set start
-						val_sb.append(key.getIndex());
-						val_sb.append(TAB);
-						// column set end
-
-						if (rDi.equals(EMPTY)) {
-							val_sb.append(tmpArray[tmpArray.length - 1]);
-						} else {
-							val_sb.append(rDi);
-							val_sb.append(TAB);
-							val_sb.append(tmpArray[tmpArray.length - 1]);
-						}
-						context.write(new Text(key_sb.toString()), new Text(val_sb.toString()));
-						val_sb.delete(0, val_sb.length());
-						key_sb.delete(0, key_sb.length());
+						writeOutput(context, table_idx, i, v);
 					}
 				}
 			}
@@ -209,63 +145,20 @@ public class PartitionAndReplicationPhaseReducer extends DefaultReducer<QuadText
 			for (Text v : values) {
 				for (int i = 0; i < TABLE_KEY[table_idx].size(); i++) {
 					if (TABLE_KEY[table_idx].get(i).compareTo(Integer.parseInt(key.getKey().toString())) != 0) {
-						rDi = TABLE_VALUE[table_idx].get(i);
-						tmpArray = v.toString().split(COMMA + WHITE_SPACE);
-						for (int j = 0; j < tmpArray.length - 1; j++) {// without
-							// rf
-							key_sb.append(tmpArray[j]);
-							key_sb.append(COMMA + WHITE_SPACE);
-						}
-						key_sb.delete(key_sb.length() - 2, key_sb.length());// delete
-						// ", "
-						// column set start
-						val_sb.append(key.getIndex());
-						val_sb.append(TAB);
-						// column set end
-
-						if (rDi.equals(EMPTY)) {
-							val_sb.append(tmpArray[tmpArray.length - 1]);
-						} else {
-							val_sb.append(rDi);
-							val_sb.append(TAB);
-							val_sb.append(tmpArray[tmpArray.length - 1]);
-						}
-						context.write(new Text(key_sb.toString()), new Text(val_sb.toString()));
-						val_sb.delete(0, val_sb.length());
-						key_sb.delete(0, key_sb.length());
+						writeOutput(context, table_idx, i, v);
 					}
 				}
 			}
 			break;
 		case 5:// =
-			int key_idx = TABLE_KEY[table_idx].indexOf(Integer.parseInt(key.getKey().toString()));
-			rDi = TABLE_VALUE[table_idx].get(key_idx);
 			for (Text v : values) {
-				tmpArray = v.toString().split(COMMA + WHITE_SPACE);
-				for (int i = 0; i < tmpArray.length - 1; i++) {// without rf
-					key_sb.append(tmpArray[i]);
-					key_sb.append(COMMA + WHITE_SPACE);
+				for (int i = 0; i < TABLE_KEY[table_idx].size(); i++) {
+					if (TABLE_KEY[table_idx].get(i).compareTo(Integer.parseInt(key.getKey().toString())) == 0) {
+						writeOutput(context, table_idx, i, v);
+					}
 				}
-				key_sb.delete(key_sb.length() - 2, key_sb.length());// delete
-				// ", "
-
-				// column set start
-				val_sb.append(key.getIndex());
-				val_sb.append(TAB);
-				// column set end
-
-				if (rDi.equals(EMPTY)) {
-					val_sb.append(tmpArray[tmpArray.length - 1]);
-				} else {
-					val_sb.append(rDi);
-					val_sb.append(TAB);
-					val_sb.append(tmpArray[tmpArray.length - 1]);
-				}
-				context.write(new Text(key_sb.toString()), new Text(val_sb.toString()));
-				val_sb.delete(0, val_sb.length());
-				key_sb.delete(0, key_sb.length());
 			}
-
+			break;
 		}
 
 	}
