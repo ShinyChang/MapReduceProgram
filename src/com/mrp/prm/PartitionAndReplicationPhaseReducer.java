@@ -103,12 +103,13 @@ public class PartitionAndReplicationPhaseReducer extends DefaultReducer<QuadText
 			InterruptedException {
 		int type = Integer.parseInt(key.getJoinCondition().toString());
 		int table_idx = TABLE_MAP.indexOf(key.getIndex().toString());
-
+		int iKey = Integer.parseInt(key.getKey().toString());
+		
 		switch (type % 6) {
 		case 0:// >=
 			for (Text v : values) {
 				for (int i = 0; i < TABLE_KEY[table_idx].size(); i++) {
-					if (TABLE_KEY[table_idx].get(i).compareTo(Integer.parseInt(key.getKey().toString())) <= 0) {
+					if (TABLE_KEY[table_idx].get(i).compareTo(iKey) <= 0) {
 						writeOutput(context, table_idx, i, v);
 					}
 				}
@@ -117,7 +118,7 @@ public class PartitionAndReplicationPhaseReducer extends DefaultReducer<QuadText
 		case 1:// <=
 			for (Text v : values) {
 				for (int i = 0; i < TABLE_KEY[table_idx].size(); i++) {
-					if (TABLE_KEY[table_idx].get(i).compareTo(Integer.parseInt(key.getKey().toString())) >= 0) {
+					if (TABLE_KEY[table_idx].get(i).compareTo(iKey) >= 0) {
 						writeOutput(context, table_idx, i, v);
 					}
 				}
@@ -126,7 +127,7 @@ public class PartitionAndReplicationPhaseReducer extends DefaultReducer<QuadText
 		case 2:// >
 			for (Text v : values) {
 				for (int i = 0; i < TABLE_KEY[table_idx].size(); i++) {
-					if (TABLE_KEY[table_idx].get(i).compareTo(Integer.parseInt(key.getKey().toString())) < 0) {
+					if (TABLE_KEY[table_idx].get(i).compareTo(iKey) < 0) {
 						writeOutput(context, table_idx, i, v);
 					}
 				}
@@ -135,7 +136,7 @@ public class PartitionAndReplicationPhaseReducer extends DefaultReducer<QuadText
 		case 3:// <
 			for (Text v : values) {
 				for (int i = 0; i < TABLE_KEY[table_idx].size(); i++) {
-					if (TABLE_KEY[table_idx].get(i).compareTo(Integer.parseInt(key.getKey().toString())) > 0) {
+					if (TABLE_KEY[table_idx].get(i).compareTo(iKey) > 0) {
 						writeOutput(context, table_idx, i, v);
 					}
 				}
@@ -144,19 +145,41 @@ public class PartitionAndReplicationPhaseReducer extends DefaultReducer<QuadText
 		case 4:// !=
 			for (Text v : values) {
 				for (int i = 0; i < TABLE_KEY[table_idx].size(); i++) {
-					if (TABLE_KEY[table_idx].get(i).compareTo(Integer.parseInt(key.getKey().toString())) != 0) {
+					if (TABLE_KEY[table_idx].get(i).compareTo(iKey) != 0) {
 						writeOutput(context, table_idx, i, v);
 					}
 				}
 			}
 			break;
 		case 5:// =
+			StringBuffer key_sb = new StringBuffer();
+			StringBuffer val_sb = new StringBuffer();
+			int key_idx = TABLE_KEY[table_idx].indexOf(Integer.parseInt(key.getKey().toString()));
+			String rDi = TABLE_VALUE[table_idx].get(key_idx);
 			for (Text v : values) {
-				for (int i = 0; i < TABLE_KEY[table_idx].size(); i++) {
-					if (TABLE_KEY[table_idx].get(i).compareTo(Integer.parseInt(key.getKey().toString())) == 0) {
-						writeOutput(context, table_idx, i, v);
-					}
+				String[] tmpArray = v.toString().split(COMMA + WHITE_SPACE);
+				for (int i = 0; i < tmpArray.length - 1; i++) {// without rf
+					key_sb.append(tmpArray[i]);
+					key_sb.append(COMMA + WHITE_SPACE);
 				}
+				// delete ", "
+				key_sb.delete(key_sb.length() - 2, key_sb.length());
+
+				// column set start
+				val_sb.append(key.getIndex());
+				val_sb.append(TAB);
+				// column set end
+
+				if (rDi.equals(EMPTY)) {
+					val_sb.append(tmpArray[tmpArray.length - 1]);
+				} else {
+					val_sb.append(rDi);
+					val_sb.append(TAB);
+					val_sb.append(tmpArray[tmpArray.length - 1]);
+				}
+				context.write(new Text(key_sb.toString()), new Text(val_sb.toString()));
+				val_sb.delete(0, val_sb.length());
+				key_sb.delete(0, key_sb.length());
 			}
 			break;
 		}
