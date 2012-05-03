@@ -27,7 +27,7 @@ import com.mrp.tjsgm.TJSGMKeyPartitioner;
 
 public class PRM extends DefaultMain {
 	private final String FP_OUTPUT = "part-r-00000";
-
+	private final int reduceScale = 1;
 	@Override
 	public long run(String query) {
 		FUNCTION_NAME = "PRM";
@@ -48,7 +48,7 @@ public class PRM extends DefaultMain {
 			if (state) { // init conf
 				Configuration conf = new Configuration();
 				state &= doSecondPhase(query, conf, PATH_OUTPUT_SECOND, parser.getDimensionTables(), parser.getFilterTables(),
-						parser.getTables().length - 1);
+						(parser.getTables().length - 1)*reduceScale);
 			}
 			if (state) {
 				Configuration conf = new Configuration();

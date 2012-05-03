@@ -21,6 +21,7 @@ import com.mrp.object.DefaultMain;
 import com.mrp.object.DoubleTextPair;
 
 public class SGM extends DefaultMain {
+	private final int reduceScale = 1;
 	
 	@Override
 	public long run(String query) {
@@ -39,7 +40,7 @@ public class SGM extends DefaultMain {
 			if (state) { // init conf
 				Configuration conf = new Configuration();
 				state &= doSecondPhase(query, conf, PATH_OUTPUT_SECOND, parser.getTables(), parser.getFilterTables(),
-						parser.getTables().length - 1);
+						(parser.getTables().length - 1)*reduceScale);
 			}
 			if (state) {
 				Configuration conf = new Configuration();

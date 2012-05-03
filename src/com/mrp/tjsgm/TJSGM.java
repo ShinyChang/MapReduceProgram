@@ -21,7 +21,8 @@ import com.mrp.object.DefaultMain;
 import com.mrp.object.QuadTextPair;
 
 public class TJSGM extends DefaultMain {
-
+	private final int reduceScale = 1;
+	
 	@Override
 	public long run(String query) {
 		FUNCTION_NAME = "TJSGM";
@@ -42,7 +43,7 @@ public class TJSGM extends DefaultMain {
 			if (state) { // init conf
 				Configuration conf = new Configuration();
 				state &= doSecondPhase(query, conf, PATH_OUTPUT_SECOND, parser.getTables(), parser.getFilterTables(),
-						parser.getTables().length - 1);
+						(parser.getTables().length - 1)*reduceScale);
 			}
 			if (state) {
 				Configuration conf = new Configuration();
@@ -114,7 +115,7 @@ public class TJSGM extends DefaultMain {
 			Job job = new Job(conf, FUNCTION_NAME + " Second Phase " + query);
 			job.setJarByClass(TJSGM.class);
 			job.setMapperClass(SecondPhaseMapper.class);
-			job.setPartitionerClass(TJSGMKeyPartitioner.class);
+//			job.setPartitionerClass(TJSGMKeyPartitioner.class);
 			job.setNumReduceTasks(numberOfReducer);
 			job.setReducerClass(SecondPhaseReducer.class);
 			job.setOutputKeyClass(QuadTextPair.class);
