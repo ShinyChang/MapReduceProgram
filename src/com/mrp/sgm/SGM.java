@@ -24,35 +24,44 @@ public class SGM extends DefaultMain {
 	private final int reduceScale = 1;
 	
 	@Override
-	public long run(String query) {
+	public long[] run(String query) {
 		FUNCTION_NAME = "SGM";
 		query = query.toUpperCase();
 		boolean state = true;
 		SQLParser parser = new SQLParser();
 		state &= parser.parse(query + ".txt"); // file name
 		wrieteGlobalInfoToHDFS(parser);
+		long[] time = new long[4];
 		Long startTime = new Date().getTime();
 		if(state){
 			if(state){
 				Configuration conf = new Configuration();
 				state &= doFirstPhase(query, conf, PATH_OUTPUT_FIRST, parser.getFilterTables());
+				time[0] = new Date().getTime() - startTime;
+				startTime = new Date().getTime();
 			}
 			if (state) { // init conf
 				Configuration conf = new Configuration();
 				state &= doSecondPhase(query, conf, PATH_OUTPUT_SECOND, parser.getTables(), parser.getFilterTables(),
 						(parser.getTables().length - 1)*reduceScale);
+				time[1] = new Date().getTime() - startTime;
+				startTime = new Date().getTime();
 			}
 			if (state) {
 				Configuration conf = new Configuration();
 				state &= doThirdPhase(query.toUpperCase(), conf, PATH_OUTPUT_THIRD);
+				time[2] = new Date().getTime() - startTime;
+				startTime = new Date().getTime();
 			}
 			if (state) {
 				Configuration conf = new Configuration();
 				state &= doForthPhase(query.toUpperCase(), conf, PATH_OUTPUT_FINAL);
+				time[3] = new Date().getTime() - startTime;
+		
 			}			
 			
 		}
-		return (new Date().getTime()) - startTime;
+		return time;
 	}
 
 	@Override

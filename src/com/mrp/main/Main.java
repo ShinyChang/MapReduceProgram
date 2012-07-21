@@ -101,7 +101,7 @@ public class Main {
 		}
 		switch (runType) {
 		case 0:
-			debug();
+			debug(query);
 			break;
 		case 1:
 			runExperiment1(query);
@@ -111,6 +111,7 @@ public class Main {
 		case 3:
 			break;
 		case 4:
+			runExperiment4("THETA");
 			break;
 		case 5:
 			// runExperiment5(round);
@@ -123,13 +124,40 @@ public class Main {
 		}
 	}
 
+	private void runExperiment4(String query) {
+		System.out.print("How many rounds you want? ");
+		int round = scanner.nextInt();
+		TJSGM tjsgm = new TJSGM();
+		PRM prm = new PRM();
+		long[][][] result = new long[2][round][4];
+
+		// run
+		for (int i = 0; i < round; i++) {
+			result[0][i] = tjsgm.run(query);
+			result[1][i] = prm.run(query);
+		}
+
+		// print
+		String[] alg = { "TJSGM", "PRM" };
+		for (int i = 0; i < result.length; i++) {// alg
+			System.out.println("Algorithm:" + alg[i]);
+			for (int j = 0; j < result[i].length; j++) {// round
+				for (long t : result[i][j]) {// time
+					System.out.print(t + "\t");
+				}
+				System.out.println();
+			}
+			System.out.println();
+		}
+	}
+
 	private void runExperiment1(int[] query) {
 		System.out.print("How many rounds you want? ");
 		int round = scanner.nextInt();
 		SGM sgm = new SGM();
 		TJSGM tjsgm = new TJSGM();
 		PRM prm = new PRM();
-		long[][][] result = new long[3][round][query.length];
+		long[][][][] result = new long[3][round][query.length][4];
 		for (int j = 0; j < round; j++) {
 			for (int i = 0; i < query.length; i++) {
 				result[0][j][i] = sgm.run(QUERY[query[i]]);
@@ -144,25 +172,58 @@ public class Main {
 
 		// print
 		String[] Q = { "SGM", "TJSGM", "PRM" };
-		for (int i = 0; i < result.length; i++) {
+		for (int i = 0; i < result.length; i++) {// alg
 			System.out.println("Algorithm:" + Q[i]);
-			for (int j = 0; j < result[i].length; j++) {
-				for(int k = 0; k < result[i][j].length; k++){
-					System.out.print(QUERY[query[k]]+"\t");
-				}
-				System.out.println();
-				for (long q : result[i][j]) {
-					System.out.print(q + "\t");
+			for (int k = 0; k < result[i][0].length; k++) {// query
+				System.out.print(QUERY[query[k]] + "\t");
+			}
+			System.out.println();
+			for (int j = 0; j < result[i].length; j++) {// round
+
+				for (int m = 0; m < 4; m++) {//t
+					for (long[] q : result[i][j]) {// query
+						System.out.print(q[m]+"\t");
+					}
+					System.out.println();
 				}
 				System.out.println();
 			}
 		}
 	}
 
-	private void debug() {
+	private void debug(int[] query) {
 		// new SGM().run("Q3.4");
-		 new TJSGM().run("Q3.4");
-//		new PRM().run("Q3.4");
+		// new TJSGM().run("Q3.1");
+//		new PRM().run("Q3.1");
+		System.out.print("How many rounds you want? ");
+		int round = scanner.nextInt();
+		TJSGM tjsgm = new TJSGM();
+		long[][][][] result = new long[1][round][query.length][4];
+		for (int j = 0; j < round; j++) {
+			for (int i = 0; i < query.length; i++) {
+				result[0][j][i] = tjsgm.run(QUERY[query[i]]);
+			}
+		}
+
+		// print
+		String[] Q = {"TJSGM" };
+		for (int i = 0; i < result.length; i++) {// alg
+			System.out.println("Algorithm:" + Q[i]);
+			for (int k = 0; k < result[i][0].length; k++) {// query
+				System.out.print(QUERY[query[k]] + "\t");
+			}
+			System.out.println();
+			for (int j = 0; j < result[i].length; j++) {// round
+
+				for (int m = 0; m < 4; m++) {//t
+					for (long[] q : result[i][j]) {// query
+						System.out.print(q[m]+"\t");
+					}
+					System.out.println();
+				}
+				System.out.println();
+			}
+		}		
 	}
 
 	private int[] convertObjectArrayToIntegerArray(Object[] objectArray) {

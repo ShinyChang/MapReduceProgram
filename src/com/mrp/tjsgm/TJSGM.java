@@ -21,10 +21,10 @@ import com.mrp.object.DefaultMain;
 import com.mrp.object.QuadTextPair;
 
 public class TJSGM extends DefaultMain {
-	private final int reduceScale = 1;
+	private final int reduceScale = 3;
 	
 	@Override
-	public long run(String query) {
+	public long[] run(String query) {
 		FUNCTION_NAME = "TJSGM";
 		query = query.toUpperCase();
 		boolean state = true;
@@ -33,28 +33,37 @@ public class TJSGM extends DefaultMain {
 		state &= parser.parse(query + ".txt"); // file name
 		wrieteGlobalInfoToHDFS(parser);
 
+		long[] time = new long[4];
 		long startTime = new Date().getTime();
 		if (state) {
 
 			if (state) { // init conf
 				Configuration conf = new Configuration();
 				state &= doFirstPhase(query, conf, PATH_OUTPUT_FIRST, parser.getFilterTables());
+				time[0] = new Date().getTime() - startTime;
+				startTime = new Date().getTime();
 			}
 			if (state) { // init conf
 				Configuration conf = new Configuration();
 				state &= doSecondPhase(query, conf, PATH_OUTPUT_SECOND, parser.getTables(), parser.getFilterTables(),
 						(parser.getTables().length - 1)*reduceScale);
+				time[1] = new Date().getTime() - startTime;
+				startTime = new Date().getTime();
 			}
 			if (state) {
 				Configuration conf = new Configuration();
 				state &= doThirdPhase(query.toUpperCase(), conf, PATH_OUTPUT_THIRD);
+				time[2] = new Date().getTime() - startTime;
+				startTime = new Date().getTime();
 			}
 			if (state) {
 				Configuration conf = new Configuration();
 				state &= doForthPhase(query.toUpperCase(), conf, PATH_OUTPUT_FINAL);
+				time[3] = new Date().getTime() - startTime;
+				startTime = time[3];
 			}
 		}
-		return (new Date().getTime()) - startTime;
+		return time;
 	}
 
 	@Override
@@ -115,7 +124,7 @@ public class TJSGM extends DefaultMain {
 			Job job = new Job(conf, FUNCTION_NAME + " Second Phase " + query);
 			job.setJarByClass(TJSGM.class);
 			job.setMapperClass(SecondPhaseMapper.class);
-//			job.setPartitionerClass(TJSGMKeyPartitioner.class);
+			job.setPartitionerClass(TJSGMKeyPartitioner.class);
 			job.setNumReduceTasks(numberOfReducer);
 			job.setReducerClass(SecondPhaseReducer.class);
 			job.setOutputKeyClass(QuadTextPair.class);

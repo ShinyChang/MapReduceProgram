@@ -86,8 +86,8 @@ public class DefaultMain {
 		writeHDFS.writeGlobalInfo(GLOBAL_INFO_ORDER_BY, parser.getOrderby());
 	}
 	
-	public long run(String query) {
-		return -1L;
+	public long[] run(String query) {
+		return null;
 	}
 
 	protected boolean doFirstPhase(String query, Configuration conf,
